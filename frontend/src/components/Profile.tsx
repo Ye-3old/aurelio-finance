@@ -14,6 +14,10 @@ import {
 } from "../api/tax";
 import { getBaseCurrency, saveBaseCurrency, type BaseCurrencySetting } from "../api/baseCurrency";
 import { choicesOf, isVisible, topicsOf, unshownAnswer } from "./questionnaire";
+
+// Display labels for the yes/no answers. The stored and compared values stay
+// the English tokens the backend speaks ("yes" / "unsure" / "no").
+const BOOLEAN_LABEL: Record<string, string> = { yes: "是", unsure: "不确定", no: "否" };
 import { apiError, btnClass, cardClass, inputClass } from "./ui";
 
 /* The questions are the backend's (`GET /api/survey/questions`, app/questionnaire.py):
@@ -93,7 +97,7 @@ export default function Profile() {
           })),
       );
     } catch (err) {
-      setError(apiError(err, "Could not reach the backend. Is it running on :8000?"));
+      setError(apiError(err, "无法连接后端，后端是否在 :8000 上运行？"));
     } finally {
       setLoading(false);
     }
@@ -134,7 +138,7 @@ export default function Profile() {
       }
       setSaved(true);
     } catch (err) {
-      setError(apiError(err, "Save failed."));
+      setError(apiError(err, "保存失败。"));
     } finally {
       setSaving(false);
     }
@@ -145,11 +149,9 @@ export default function Profile() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-ink">Profile &amp; goals</h2>
+        <h2 className="text-lg font-semibold text-ink">档案与目标</h2>
         <p className="text-sm text-ink-soft">
-          A short questionnaire that gives Aurelio your context. Saved on your
-          machine; sent to the AI model through OpenRouter when you run an
-          analysis or ask the chat.
+          一份简短的问卷，把你的背景告诉 Aurelio。内容保存在你自己的机器上；当你运行分析或向对话提问时，才会经 OpenRouter 发给 AI 模型。
         </p>
       </div>
 
@@ -203,9 +205,9 @@ export default function Profile() {
 
       <div className="flex items-center gap-3">
         <button onClick={save} disabled={saving} className={btnClass}>
-          {saving ? "Saving…" : "Save profile"}
+          {saving ? "保存中…" : "保存档案"}
         </button>
-        {saved && <span className="text-sm text-up">Saved ✓</span>}
+        {saved && <span className="text-sm text-up">已保存 ✓</span>}
       </div>
     </div>
   );
@@ -233,17 +235,12 @@ function BaseCurrencySection({
 }) {
   return (
     <section className={cardClass + " space-y-3 p-5"}>
-      <h3 className="text-sm font-semibold text-ink">Base currency</h3>
+      <h3 className="text-sm font-semibold text-ink">本位币</h3>
       <p className="text-sm text-ink-soft">
-        Every total is shown in this currency: your net worth, its history, every
-        converted figure. Changing it moves all of them, the history included:
-        it is the same wealth in another unit, converted at the ECB rate of each
-        figure's own day. Nothing you recorded is rewritten: every amount keeps
-        the currency you typed it in, and a debit or a transfer fixed on its day
-        stays what it was.
+        所有合计都用这种货币显示：你的净资产、它的历史、每一个换算后的数字。改币种会牵动全部数字，历史也一样：还是同一笔财富，换了个单位，按各数字当天的欧洲央行汇率换算。你记下的内容不会被改写：每笔金额保留你输入时的货币，按当天记账的支出或转账也保持原样。
       </p>
       <label className="flex items-center gap-2 text-sm text-ink">
-        Show totals in
+        合计显示为
         <select
           className={inputClass + " w-28"}
           value={picked}
@@ -258,13 +255,13 @@ function BaseCurrencySection({
       </label>
       {picked !== current && (
         <p className="text-xs text-warn">
-          Saving switches every total from {current} to {picked}. The rates against{" "}
-          {picked} are fetched first; if the feed cannot be reached, nothing changes.
+          保存会把所有合计从 {current} 切换到 {picked}。会先取兑 {" "}
+          {picked} 的汇率；如果行情源连不上，什么都不会变。
         </p>
       )}
       {available.length <= 1 && (
         <p className="text-xs text-ink-faint">
-          The rate feed has not answered yet, so {current} is the only currency on offer.
+          行情源还没有回应，所以目前只有 {current} 一种货币可选。
         </p>
       )}
     </section>
@@ -310,25 +307,21 @@ function TaxSection({
   return (
     <section className={cardClass + " space-y-4 p-5"}>
       <div>
-        <h3 className="text-sm font-semibold text-ink">Tax</h3>
+        <h3 className="text-sm font-semibold text-ink">税费</h3>
         <p className="mt-1 text-sm text-ink-soft">
-          Your own rates, used for an estimate shown beside your portfolio
-          figures. Aurelio never puts a tax inside a total: not your net worth,
-          not your book value. Leave a field empty if you do not know it: that
-          is different from writing 0, and the estimate will say which half it
-          could not work out.
+          你自己的税率，用来在持仓数字旁给出一个估算。Aurelio 从不把税算进合计里：净资产不算，账面价值也不算。不知道的字段留空就好：留空和填 0 不一样，估算会说明哪一半它算不出来。
         </p>
       </div>
 
       <div>
         <label className="mb-1 block text-sm text-ink">
-          Which country do you pay investment tax in?
+          你在哪个国家缴纳投资税？
         </label>
         <input
           className={inputClass + " w-full"}
           type="text"
           list="tax-countries"
-          placeholder="Any country (typing your own rates below works either way)"
+          placeholder="任意国家（在下面自己填税率都一样好使）"
           value={country}
           onChange={(e) => onChange("country", e.target.value)}
         />
@@ -342,8 +335,8 @@ function TaxSection({
       {match && (
         <div className="rounded-sm bg-tint p-3 text-sm">
           <p className="text-ink">
-            {match.country}: {match.regime} ({match.capital_gains_rate}% on
-            gains, {match.dividend_withholding_rate}% on dividends).
+            {match.country}：{match.regime}（资本利得 {match.capital_gains_rate}%，
+            分红 {match.dividend_withholding_rate}%）。
           </p>
           {/* Offered, never applied on its own. A figure that changed itself
               because a text field changed is a figure nobody declared, and the
@@ -354,21 +347,21 @@ function TaxSection({
             onClick={() => onUseDefault(match)}
             className="mt-2 rounded-sm border border-olive px-3 py-1.5 text-sm text-olive-deep transition hover:bg-olive-tint"
           >
-            Use these as a starting point
+            以此为起点填入
           </button>
         </div>
       )}
 
       <div className="flex flex-wrap gap-6">
         <RateField
-          label="Capital gains rate"
-          hint="Applied to the gains your sells locked in"
+          label="资本利得税率"
+          hint="适用于卖出已锁定的盈利"
           value={capitalGains}
           onChange={(v) => onChange("cg", v)}
         />
         <RateField
-          label="Dividend withholding rate"
-          hint="Applied only to dividends still showing the market's gross figure"
+          label="分红预扣税率"
+          hint="只适用于仍按市场税前总额显示的分红"
           value={dividends}
           onChange={(v) => onChange("div", v)}
         />
@@ -376,8 +369,7 @@ function TaxSection({
 
       {nothingSet && (
         <p className="text-sm text-ink-faint">
-          Nothing set, so no tax estimate is shown anywhere: not a zero, and
-          not a silent omission. The portfolio page says what it is missing.
+          还什么都没填，所以任何地方都不显示税费估算：不是按零算，也不是悄悄略过。持仓页会说明它缺什么。
         </p>
       )}
     </section>
@@ -405,7 +397,7 @@ function RateField({
           min={0}
           max={100}
           step="0.001"
-          placeholder="not set"
+          placeholder="未设置"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -440,19 +432,19 @@ function QuestionField({
               type="button"
               onClick={() => onChange(opt)}
               className={
-                "rounded-sm border px-3 py-1.5 text-sm capitalize transition " +
+                "rounded-sm border px-3 py-1.5 text-sm transition " +
                 (value === opt
                   ? "border-olive bg-olive-tint text-olive-deep"
                   : "border-rule text-ink-soft hover:bg-ground")
               }
             >
-              {opt}
+              {BOOLEAN_LABEL[opt] ?? opt}
             </button>
           ))}
         </div>
       ) : q.type === "single" ? (
         <select className={inputClass} value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">choose…</option>
+          <option value="">请选择…</option>
           {q.options.map((o) => (
             <option key={o} value={o}>
               {o}

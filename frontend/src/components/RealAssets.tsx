@@ -33,6 +33,20 @@ import { REAL_ASSET, VALUATION, marks, refusal } from "./required";
 
 const CATEGORIES = ["", "real_estate", "vehicle", "collectible", "jewelry", "art", "other"];
 
+// Display only: the stored `category` stays the enum the API speaks.
+const CATEGORY_LABEL: Record<string, string> = {
+  real_estate: "房产",
+  vehicle: "车辆",
+  collectible: "收藏品",
+  jewelry: "珠宝",
+  art: "艺术品",
+  other: "其他",
+};
+
+function categoryLabel(c: string | null | undefined): string {
+  return c ? (CATEGORY_LABEL[c] ?? c) : "";
+}
+
 /* Which asset is open is App's state, so the chat can be told which one "this"
    is, and so the page is where you left it when you come back to Records. On
    arrival the asset is read again; one that is gone climbs to the list. See
@@ -48,7 +62,7 @@ export default function RealAssets({
   if (!checked) return null;
 
   const crumbs: Crumb[] = [
-    { label: "Real assets", active: !asset, onClick: () => onAsset(null) },
+    { label: "实物资产", active: !asset, onClick: () => onAsset(null) },
   ];
   if (asset) crumbs.push({ label: asset.name, active: true, onClick: () => {} });
 
@@ -94,7 +108,7 @@ function AssetsLevel({ onSelect }: { onSelect: (a: RealAsset) => void }) {
       setItems(assets);
       setBase(b.base_currency);
     } catch (err) {
-      setError(apiError(err, "Could not reach the backend. Is it running on :8000?"));
+      setError(apiError(err, "无法连接后端，后端是否在 :8000 上运行？"));
     } finally {
       setLoading(false);
     }
@@ -137,39 +151,39 @@ function AssetsLevel({ onSelect }: { onSelect: (a: RealAsset) => void }) {
       reset();
       await load();
     } catch (err) {
-      setFormError(apiError(err, "Save failed."));
+      setFormError(apiError(err, "保存失败。"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function remove(a: RealAsset) {
-    if (!window.confirm(`Delete "${a.name}"? This also removes its valuations.`)) return;
+    if (!window.confirm(`删除「${a.name}」？这会同时删掉它的估值历史。`)) return;
     setError(null);
     try {
       await deleteRealAsset(a.id);
       if (editId === a.id) reset();
       await load();
     } catch (err) {
-      setError(apiError(err, "Delete failed."));
+      setError(apiError(err, "删除失败。"));
     }
   }
 
   return (
-    <Section title="Real assets">
+    <Section title="实物资产">
       <form onSubmit={submit} className="flex flex-wrap gap-2">
-        <input className={inputClass} aria-label="Name" {...marks(REAL_ASSET, "name")} value={name} onChange={(e) => setName(e.target.value)} />
+        <input className={inputClass} aria-label="名称" {...marks(REAL_ASSET, "name")} value={name} onChange={(e) => setName(e.target.value)} />
         <select className={inputClass} value={category} onChange={(e) => setCategory(e.target.value)}>
-          {CATEGORIES.map((c) => (<option key={c} value={c}>{c || "category…"}</option>))}
+          {CATEGORIES.map((c) => (<option key={c} value={c}>{categoryLabel(c) || "类别…"}</option>))}
         </select>
-        <input className={inputClass + " w-24"} placeholder="currency" {...marks(REAL_ASSET, "currency")} list={CURRENCY_LIST} title="The currency the asset is valued in. Proposed from your base currency; change it and it stays as you typed it." value={currency} onChange={(e) => setCurrencyChoice(e.target.value)} />
-        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "Save" : "Add"}</button>
+        <input className={inputClass + " w-24"} placeholder="货币" {...marks(REAL_ASSET, "currency")} list={CURRENCY_LIST} title="这项资产以什么货币计价。默认按你的本位币给出；改成别的就按你输入的保留。" value={currency} onChange={(e) => setCurrencyChoice(e.target.value)} />
+        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "保存" : "添加"}</button>
         {editId != null && <CancelButton onClick={reset} />}
       </form>
       {formError && <p className="text-down">{formError}</p>}
-      <RowsOrEmpty loading={loading} error={error} empty={items.length === 0} emptyText="No real assets yet.">
+      <RowsOrEmpty loading={loading} error={error} empty={items.length === 0} emptyText="还没有实物资产。">
         {items.map((a) => (
-          <Row key={a.id} onClick={() => onSelect(a)} onEdit={() => startEdit(a)} note={a.notes} onDelete={() => remove(a)} title={a.name} badge={a.category} subtitle={a.currency} />
+          <Row key={a.id} onClick={() => onSelect(a)} onEdit={() => startEdit(a)} note={a.notes} onDelete={() => remove(a)} title={a.name} badge={categoryLabel(a.category)} subtitle={a.currency} />
         ))}
       </RowsOrEmpty>
     </Section>
@@ -197,7 +211,7 @@ function ValuationsLevel({ asset }: { asset: RealAsset }) {
       setItems(vals);
       setLinkedDebts(liabs.filter((l) => l.real_asset_id === asset.id));
     } catch (err) {
-      setError(apiError(err, "Could not load valuations."));
+      setError(apiError(err, "无法加载估值。"));
     } finally {
       setLoading(false);
     }
@@ -222,19 +236,19 @@ function ValuationsLevel({ asset }: { asset: RealAsset }) {
   const inAsset = money(asset.currency);
 
   return (
-    <Section title={`Valuations: ${asset.name}`}>
+    <Section title={`估值：${asset.name}`}>
       {equity != null && linkedDebts.length > 0 && (
         <p className="rounded-sm bg-ground p-3 text-sm text-ink-soft">
-          Latest value {inAsset.format(latestValue!)} − debt {inAsset.format(debtTotal)} (
-          {linkedDebts.map((l) => l.name).join(", ")}) ={" "}
-          <strong className="text-ink">your equity {inAsset.format(equity)}</strong>
+          最新估值 {inAsset.format(latestValue!)} − 负债 {inAsset.format(debtTotal)}（
+          {linkedDebts.map((l) => l.name).join("、")}）＝{" "}
+          <strong className="text-ink">你的权益 {inAsset.format(equity)}</strong>
         </p>
       )}
       {otherCurrency.length > 0 && (
         <p className="rounded-sm bg-ground p-3 text-sm text-ink-soft">
-          Equity is not worked out here:{" "}
-          {otherCurrency.map((l) => `${l.name} is in ${l.currency}`).join(", ")}, and this
-          asset is valued in {asset.currency}. The net worth on the Dashboard converts both.
+          这里不计算权益：{" "}
+          {otherCurrency.map((l) => `${l.name} 以 ${l.currency} 计`).join("、")}，而这项资产以{" "}
+          {asset.currency} 计价。总览里的净资产会把两者都换算。
         </p>
       )}
       <DatedAmountEditor
@@ -249,10 +263,10 @@ function ValuationsLevel({ asset }: { asset: RealAsset }) {
         update={updateValuation}
         destroy={deleteValuation}
         onChanged={load}
-        noun="valuation"
-        amountLabel="Value"
+        noun="估值"
+        amountLabel="价值"
         needs={VALUATION}
-        emptyText="No valuations yet."
+        emptyText="还没有估值。"
       />
     </Section>
   );

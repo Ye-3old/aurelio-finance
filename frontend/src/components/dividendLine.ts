@@ -20,7 +20,7 @@
     shown as stored rather than dropped. */
 export function policyWord(p: string | null | undefined): string | null {
   if (!p) return null;
-  return p === "acc" ? "Accumulating" : p === "dist" ? "Distributing" : p;
+  return p === "acc" ? "累积分红" : p === "dist" ? "现金分红" : p;
 }
 
 /** What the line says: the stated policy, or, with none stated, the last
@@ -29,5 +29,5 @@ export function dividendWord(
   policy: string | null | undefined,
   lastDividend: string | null | undefined,
 ): string | null {
-  return policyWord(policy) ?? (lastDividend ? `last dividend ${lastDividend}` : null);
+  return policyWord(policy) ?? (lastDividend ? `最近分红 ${lastDividend}` : null);
 }

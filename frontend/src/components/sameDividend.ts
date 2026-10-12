@@ -68,21 +68,21 @@ export function estimatedDividends<T extends LedgerRow>(
 
 /** The sentence over the offered rows. */
 export function offerLine(symbol: string, where: string): string {
-  return `Already recorded for ${symbol.trim().toUpperCase()} at ${where}, still estimated (the market's gross figure, before tax). If the dividend you are entering is one of these, correct it instead: a second row would count it twice.`;
+  return `${where} 已有 ${symbol.trim().toUpperCase()} 的记录，仍是预估（市场税前总额）。如果你正在录入的分红就是其中之一，请改为更正它：再加一行会重复计算。`;
 }
 
 /** What is said of the estimated rows beyond the ones named, or null. */
 export function olderLine(count: number): string | null {
   const older = count - SHOWN;
   if (older <= 0) return null;
-  return older === 1 ? "And 1 older one." : `And ${older} older ones.`;
+  return older === 1 ? "还有 1 笔更早的。" : `还有 ${older} 笔更早的。`;
 }
 
 /** Said once the form has become the correction of a row. */
 export function correctingLine(rowDate: string, typedDate: string, fmt = asIs): string {
-  const said = `Correcting the dividend of ${fmt(rowDate)} with your figures: save to replace its own.`;
+  const said = `正在用你的数字更正 ${fmt(rowDate)} 的分红：保存即替换原记录。`;
   return typedDate && typedDate !== rowDate
-    ? `${said} Its date stays ${fmt(rowDate)}, the ex-date the app finds it by, so ${fmt(typedDate)} is not used.`
+    ? `${said}日期保持 ${fmt(rowDate)} 不变：应用按除息日找它：所以 ${fmt(typedDate)} 不会生效。`
     : said;
 }
 
@@ -99,5 +99,5 @@ export function movedOffItsDay(
   fmt = asIs,
 ): string | null {
   if (!recordedByTheApp(row) || !date || date === row.date) return null;
-  return `The app recorded this dividend on its ex-date, ${fmt(row.date)}, and finds it by that day. Moved to ${fmt(date)}, the dividend of ${fmt(row.date)} is recorded again at the next start, unless this account has a situation dated on or after it.`;
+  return `应用在除息日 ${fmt(row.date)} 记下了这笔分红，并按该日期找它。若改到 ${fmt(date)}，下次启动时 ${fmt(row.date)} 的分红会被再次记入，除非该账户有一份日期不早于它的快照。`;
 }

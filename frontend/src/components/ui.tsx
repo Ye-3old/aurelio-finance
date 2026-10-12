@@ -27,8 +27,8 @@ export const CURRENCY_LIST = "currency-codes";
 // keeps working.
 export { locale, money } from "./money";
 
-/* CONVERTED figures — every total the backend has already turned into the
-   base currency — are printed in the base THE PAYLOAD DECLARES:
+/* CONVERTED figures  every total the backend has already turned into the
+   base currency  are printed in the base THE PAYLOAD DECLARES:
    `money(summary.base_currency).format(summary.net_worth)`.
 
    There used to be an `eur` and a `eurCents` here, formatters with the euro
@@ -36,20 +36,20 @@ export { locale, money } from "./money";
    formatter that knew it in advance would be a module-level guess: a tab left
    open across a change of base would print the new unit beside numbers
    computed in the old one. Taking the unit from the response the number came
-   in means a figure and its unit always arrive together — the rule 0bf262b
+   in means a figure and its unit always arrive together  the rule 0bf262b
    paid for, with a name that can no longer carry it.
 
    The currency is DESIGNED and the locale is ACCIDENTAL, as before: a German
    and an Italian read the same number punctuated differently. A figure the
    reader TYPED is in its row's currency, `money(row.currency)`. And for the
-   few figures where the cents ARE the fact — a carried remainder smaller than
-   one unit, a balance compared with a spend — `money(code, "cents")`. */
+   few figures where the cents ARE the fact  a carried remainder smaller than
+   one unit, a balance compared with a spend  `money(code, "cents")`. */
 
 /* There is no new-row currency here any more. It was EUR, written into every
    form that could not tell what a row was in, and it was true only while EUR
    was the only base. A form now proposes the currency of the account the row
-   belongs to (`proposedCurrency.ts`), and a row with no account — a debt, a
-   goal, a real asset — proposes the base the reader chose, which it reads from
+   belongs to (`proposedCurrency.ts`), and a row with no account  a debt, a
+   goal, a real asset  proposes the base the reader chose, which it reads from
    the backend with its own data. The box shows the proposal, and what the
    reader types in it wins. */
 
@@ -68,8 +68,8 @@ export { policyWord } from "./dividendLine";
 // What the backend actually said about a failed request, or `fallback` when it
 // said nothing usable.
 //
-// The backend writes its refusals to be read by a person — "Broker B already
-// has a situation on 2026-02-01" — and every call site used to throw them away
+// The backend writes its refusals to be read by a person  "Broker B already
+// has a situation on 2026-02-01"  and every call site used to throw them away
 // in a bare `catch { setError("Save failed.") }`. The reader got a sentence
 // naming the verb and nothing else, and so did whoever was debugging. The
 // fallback is what we say when there is genuinely nothing better, not the
@@ -79,16 +79,16 @@ export function apiError(e: unknown, fallback: string): string {
 
   // Nothing answered at all. "The server refused this" and "there was no
   // server" are different claims, and reporting the second as the first sends
-  // someone off to correct a request that was fine — the same distinction the
+  // someone off to correct a request that was fine  the same distinction the
   // backend keeps between MarketUnreachable and PriceError.
-  if (!e.response) return "The backend did not answer. Is it running on :8000?";
+  if (!e.response) return "后端没有响应。它是否运行在 :8000 上？";
 
   const detail = (e.response.data as { detail?: unknown } | undefined)?.detail;
   if (typeof detail === "string" && detail.trim()) return detail.trim();
 
   // 422: FastAPI validates the body and returns one entry per offending field.
   // String()-ing that array reads "[object Object]", which is a worse message
-  // than the fallback it replaced — so it is unpacked rather than stringified.
+  // than the fallback it replaced  so it is unpacked rather than stringified.
   if (Array.isArray(detail)) {
     const fields = detail
       .map((d) => {
@@ -106,10 +106,10 @@ export function apiError(e: unknown, fallback: string): string {
   return fallback;
 }
 
-/* Motion that claims only that something is happening — which, unlike a
+/* Motion that claims only that something is happening  which, unlike a
    progress bar, is a claim we can always stand behind. Stops for readers who
    asked their OS for less motion. */
-// How a model's Markdown is drawn — Tailwind classes per element, no typography
+// How a model's Markdown is drawn  Tailwind classes per element, no typography
 // plugin. It lived in Advisor.tsx, which was a page; it is here now because it
 // was never that page's, and the two things that render prose in this app are
 // the chat panel and the analysis reader.
@@ -166,8 +166,8 @@ export function useElapsedSeconds(startedAt: number | null): number {
     return () => clearInterval(id);
   }, [startedAt]);
   if (startedAt === null) return 0;
-  // `now` can predate the click for the first second — the interval has not
-  // fired yet — so the clock starts at 0, never below it.
+  // `now` can predate the click for the first second  the interval has not
+  // fired yet  so the clock starts at 0, never below it.
   return Math.max(0, Math.round((now - startedAt) / 1000));
 }
 
@@ -378,7 +378,7 @@ export function Section({
   aside?: ReactNode;
   /** One sentence: what this section is FOR. Read every time, so keep it short. */
   hint?: string;
-  /** The mechanics, one step quieter — read once, then skipped forever.
+  /** The mechanics, one step quieter  read once, then skipped forever.
       Separating the two is the whole point: a 90-word paragraph above a table
       is not read carefully, it is skipped, and it takes the space of the one
       line that would have been. */
@@ -425,7 +425,7 @@ export function RowsOrEmpty({
   emptyText: string;
   children: ReactNode;
 }) {
-  if (loading) return <p className="text-ink-soft">Loading…</p>;
+  if (loading) return <p className="text-ink-soft">加载中…</p>;
   if (error) return <p className="text-down">{error}</p>;
   if (empty) return <p className="text-ink-soft">{emptyText}</p>;
   return (
@@ -457,7 +457,7 @@ export function Row({
   subtitle?: string;
   /** A fact that must survive a narrow window. `subtitle` truncates, which is
       right for a list of attributes and wrong for anything the reader is
-      entitled to see — it gets its own line and is never clipped. */
+      entitled to see  it gets its own line and is never clipped. */
   detail?: string;
   /** The note stored on the record, exactly as stored: the reader's own words,
       or a stamp the app wrote saying where the row came from. Never clipped,
@@ -508,8 +508,8 @@ export function Row({
           <button
             onClick={onRefresh}
             disabled={refreshing}
-            aria-label="Refresh price"
-            title="Refresh price from the market"
+            aria-label="刷新价格"
+            title="从市场刷新最新价格"
             className="shrink-0 px-2 py-3 text-ink-faint transition hover:text-up disabled:opacity-50"
           >
             {refreshing ? "…" : "↻"}
@@ -518,8 +518,8 @@ export function Row({
         {onEdit && (
           <button
             onClick={onEdit}
-            aria-label="Edit"
-            title="Edit"
+            aria-label="编辑"
+            title="编辑"
             className="shrink-0 px-2 py-3 text-ink-faint transition hover:text-olive"
           >
             ✎
@@ -528,8 +528,8 @@ export function Row({
         {onDelete && (
           <button
             onClick={onDelete}
-            aria-label="Delete"
-            title="Delete"
+            aria-label="删除"
+            title="删除"
             className="shrink-0 px-3 py-3 text-ink-faint transition hover:text-down"
           >
             ✕
@@ -551,8 +551,8 @@ export const statLabelClass = "text-[0.65rem] font-medium uppercase tracking-[0.
     Dashboard's meter show the same `savings_rate`, and used to call it two
     different things. */
 export const SAVINGS_RATE: Explain = {
-  question: "What is the savings rate?",
-  text: "Share of monthly income left after expenses.",
+  question: "什么是储蓄率？",
+  text: "扣除支出后，每月收入还剩下的比例。",
 };
 
 export function StatCard({
@@ -566,7 +566,7 @@ export function StatCard({
   value: string;
   valueClass?: string;
   /** One quiet line under the figure, for the caveat the figure cannot carry
-      itself — how much of it is measured rather than remembered. */
+      itself  how much of it is measured rather than remembered. */
   note?: string;
   /** What the figure's name means, behind a "?" beside it. */
   explain?: Explain;
@@ -603,7 +603,7 @@ export function CancelButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="rounded-sm px-3 py-2 text-sm text-ink-soft hover:text-ink"
     >
-      Cancel
+      取消
     </button>
   );
 }
@@ -613,8 +613,8 @@ export function EditorButtons({
   editing,
   submitting,
   onCancel,
-  addLabel = "Add",
-  saveLabel = "Save",
+  addLabel = "添加",
+  saveLabel = "保存",
 }: {
   editing: boolean;
   submitting: boolean;

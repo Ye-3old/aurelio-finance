@@ -178,12 +178,12 @@ async function post(
     });
   } catch {
     if (signal.aborted) return { kind: "aborted" };
-    return { kind: "error", detail: "The backend did not answer. Is it running on :8000?" };
+    return { kind: "error", detail: "后端没有响应。它是否运行在 :8000 上？" };
   }
   if (!response.ok || !response.body) {
     // A 404, 422 or 500 before any frame was sent: FastAPI's `detail` when it
     // wrote one, the status otherwise.
-    let detail = `The backend refused the question (HTTP ${response.status}).`;
+    let detail = `后端拒绝了这个问题（HTTP ${response.status}）。`;
     try {
       const data = (await response.json()) as { detail?: unknown };
       if (typeof data.detail === "string" && data.detail.trim()) detail = data.detail.trim();

@@ -28,7 +28,7 @@ import type { Money } from "./money";
 /* Chart decisions (see the project's dataviz rules):
    - Net worth over time is ONE series: the headline metric. The components
      (financial / real / debts) live in the hover layer instead of becoming
-     three more lines that bury the story — "emphasis", not "categorical".
+     three more lines that bury the story  "emphasis", not "categorical".
      A single series needs no legend: the title names it.
    - Allocation is nominal (asset classes have no natural order), so every bar
      takes the SAME hue. Colouring bars by size would re-encode bar length.
@@ -94,7 +94,7 @@ function ChartCard({
                   : "border-transparent text-ink-soft hover:text-ink")
               }
             >
-              {v}
+              {v === "chart" ? "图表" : "表格"}
             </button>
           ))}
         </div>
@@ -116,10 +116,10 @@ function SeriesTooltip({ active, payload, label }: TipProps) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   const rows: [string, number][] = [
-    ["Net worth", p.net_worth],
-    ["Financial", p.financial],
-    ["Real assets", p.real],
-    ["Debts", p.liabilities],
+    ["净资产", p.net_worth],
+    ["金融资产", p.financial],
+    ["实物资产", p.real],
+    ["负债", p.liabilities],
   ];
   return (
     <div className="rounded-sm border border-rule bg-surface px-3 py-2 text-xs">
@@ -174,7 +174,7 @@ function RankedBars({
           <span className="whitespace-nowrap text-right tabular-nums text-ink-soft">
             {unit.format(it.value)}
             <span className="ml-1.5 text-ink-faint">
-              {total ? pctFmt.format(it.value / total) : "n/a"}
+              {total ? pctFmt.format(it.value / total) : ""}
             </span>
           </span>
         </div>
@@ -190,7 +190,7 @@ function Meter({ ratio }: { ratio: number | null }) {
   // it used to be captioned by the definition alone, under no name.
   const name = (
     <div className="flex items-center gap-2">
-      <div className={statLabelClass}>Savings rate</div>
+      <div className={statLabelClass}>储蓄率</div>
       <Explainer {...SAVINGS_RATE} />
     </div>
   );
@@ -198,12 +198,12 @@ function Meter({ ratio }: { ratio: number | null }) {
     return (
       <div className="space-y-1.5">
         {name}
-        <p className="text-sm text-ink-soft">Not enough data yet.</p>
+        <p className="text-sm text-ink-soft">数据还不够。</p>
       </div>
     );
   const clamped = Math.max(0, Math.min(ratio, 1));
   const tone = ratio < 0 ? "bg-down" : ratio < 0.1 ? "bg-warn" : "bg-olive";
-  const label = ratio < 0 ? "spending more than you earn" : ratio < 0.1 ? "thin margin" : "healthy";
+  const label = ratio < 0 ? "花的比赚的多" : ratio < 0.1 ? "余地很薄" : "很健康";
   return (
     <div className="space-y-1.5">
       {name}
@@ -256,13 +256,13 @@ export default function Dashboard() {
       setSeries(n);
       setCash(c);
     } catch (err) {
-      setError(apiError(err, "Could not load the dashboard. Is the backend running on :8000?"));
+      setError(apiError(err, "无法加载总览。后端是否在 :8000 上运行？"));
     } finally {
       setLoading(false);
     }
   }
 
-  if (loading) return <p className="text-ink-soft">Loading…</p>;
+  if (loading) return <p className="text-ink-soft">加载中…</p>;
   if (error) return <p className="text-down">{error}</p>;
   if (!summary || !allocation) return null;
   // Each figure in the unit of the payload it came in.
@@ -294,7 +294,7 @@ export default function Dashboard() {
       <section className="space-y-7">
         <div>
           <p className="text-[0.65rem] font-medium uppercase tracking-[0.14em] text-ink-soft">
-            Net worth
+            净资产
           </p>
           <div className="mt-1.5 flex flex-wrap items-baseline gap-x-5 gap-y-1">
             <span className="font-display text-5xl leading-none text-ink sm:text-6xl">
@@ -302,35 +302,35 @@ export default function Dashboard() {
             </span>
             {delta != null && delta !== 0 && (
               <span className={"text-sm " + (delta > 0 ? "text-up" : "text-down")}>
-                {delta > 0 ? "+" : "−"}
-                {money(last.base_currency).format(Math.abs(delta))} since {fmtFull(first.date)}
+                自 {fmtFull(first.date)} 起{delta > 0 ? "+" : "−"}
+                {money(last.base_currency).format(Math.abs(delta))}
               </span>
             )}
           </div>
           <p className="mt-2 text-xs text-ink-faint">
-            {summary.as_of ? `Latest data ${fmtFull(summary.as_of)} · ` : ""}
-            {summary.institutions} institutions · {summary.real_assets} real assets ·{" "}
-            {summary.liabilities} debts
+            {summary.as_of ? `最新数据 ${fmtFull(summary.as_of)} · ` : ""}
+            {summary.institutions} 家机构 · {summary.real_assets} 项实物资产 ·{" "}
+            {summary.liabilities} 笔负债
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
           <StatCard
-            label="Investments"
+            label="投资"
             value={inSummary.format(summary.investments_total)}
             // Silence here would mean "all of this is a live figure", which is
             // only sometimes true: a position nothing can price is carried over
             // from its last photograph and should say so.
             note={
               summary.investments_at_book > 0
-                ? `${inSummary.format(summary.investments_at_book)} of this is carried over from the last situation, not priced`
+                ? `其中 ${inSummary.format(summary.investments_at_book)} 沿用上一次快照的估值，未按市价计`
                 : undefined
             }
           />
-          <StatCard label="Cash" value={inSummary.format(summary.cash_total)} />
-          <StatCard label="Real assets" value={inSummary.format(summary.real_total)} />
+          <StatCard label="现金" value={inSummary.format(summary.cash_total)} />
+          <StatCard label="实物资产" value={inSummary.format(summary.real_total)} />
           <StatCard
-            label="Debts"
+            label="负债"
             value={inSummary.format(summary.liabilities_total)}
             valueClass={summary.liabilities_total > 0 ? "text-down" : "text-ink"}
           />
@@ -339,11 +339,11 @@ export default function Dashboard() {
 
       {/* Right under the figure it qualifies: net worth is smaller than it was
           and no line says why. The Dashboard is where that difference has to be
-          visible, not one page deeper — so the reader is told which page. */}
+          visible, not one page deeper  so the reader is told which page. */}
       <OmissionsNotice
         items={summary.unresolved_omissions ?? []}
         arrivals={summary.declared_instead ?? []}
-        where="in Portfolio"
+        where="在持仓页"
         baseCurrency={summary.base_currency}
       />
 
@@ -357,25 +357,24 @@ export default function Dashboard() {
       />
 
       {!hasData && (
-        <EmptyState title="Nothing to show yet">
-          Start in Records → Wealth with an institution and a dated situation. The charts on
-          this page are drawn from what you record there, and from nothing else.
+        <EmptyState title="暂时没什么可显示">
+          先到 记录 → 财富 里添加一家机构和一份带日期的快照。本页图表只依据你在那里记下的内容，没有别的来源。
         </EmptyState>
       )}
 
       {series.length > 1 && (
         <ChartCard
-          title="Net worth over time"
-          subtitle="Hover for the financial / real / debt breakdown behind each point."
+          title="净资产走势"
+          subtitle="悬停查看每个点背后的金融 / 实物 / 负债拆分。"
           table={
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-rule text-[0.65rem] uppercase tracking-[0.12em] text-olive">
-                  <th className="py-2 pr-4 font-semibold">Date</th>
-                  <th className="py-2 pr-4 text-right font-semibold">Net worth</th>
-                  <th className="py-2 pr-4 text-right font-semibold">Financial</th>
-                  <th className="py-2 pr-4 text-right font-semibold">Real</th>
-                  <th className="py-2 text-right font-semibold">Debts</th>
+                  <th className="py-2 pr-4 font-semibold">日期</th>
+                  <th className="py-2 pr-4 text-right font-semibold">净资产</th>
+                  <th className="py-2 pr-4 text-right font-semibold">金融资产</th>
+                  <th className="py-2 pr-4 text-right font-semibold">实物资产</th>
+                  <th className="py-2 text-right font-semibold">负债</th>
                 </tr>
               </thead>
               <tbody>
@@ -449,15 +448,15 @@ export default function Dashboard() {
       <div className="grid gap-6 lg:grid-cols-2">
         {allocationItems.length > 0 && (
           <ChartCard
-            title="Allocation"
-            subtitle={`${inAllocation.format(allocationTotal)} across ${allocationItems.length} classes`}
+            title="资产配置"
+            subtitle={`共 ${inAllocation.format(allocationTotal)}，分 ${allocationItems.length} 个类别`}
             table={
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-rule text-[0.65rem] uppercase tracking-[0.12em] text-olive">
-                    <th className="py-2 pr-4 font-semibold">Class</th>
-                    <th className="py-2 pr-4 text-right font-semibold">Value</th>
-                    <th className="py-2 text-right font-semibold">Share</th>
+                    <th className="py-2 pr-4 font-semibold">类别</th>
+                    <th className="py-2 pr-4 text-right font-semibold">市值</th>
+                    <th className="py-2 text-right font-semibold">占比</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -466,7 +465,7 @@ export default function Dashboard() {
                       <td className="py-1.5 pr-4">{i.name}</td>
                       <td className="py-1.5 pr-4 text-right">{inAllocation.format(i.value)}</td>
                       <td className="py-1.5 text-right text-ink-soft">
-                        {allocationTotal ? pctFmt.format(i.value / allocationTotal) : "n/a"}
+                        {allocationTotal ? pctFmt.format(i.value / allocationTotal) : ""}
                       </td>
                     </tr>
                   ))}
@@ -479,28 +478,28 @@ export default function Dashboard() {
         )}
 
         {cash && (
-          <Panel title="Monthly cash flow">
+          <Panel title="每月现金流">
             <div className="space-y-5">
               <div className="grid grid-cols-3 gap-x-5">
-                <StatCard label="Income" value={money(cash.base_currency).format(cash.monthly_income)} valueClass="text-up" />
+                <StatCard label="收入" value={money(cash.base_currency).format(cash.monthly_income)} valueClass="text-up" />
                 <StatCard
-                  label="Expenses"
+                  label="支出"
                   value={money(cash.base_currency).format(cash.monthly_expenses)}
                   valueClass="text-down"
                 />
                 <StatCard
-                  label="Net"
+                  label="净额"
                   value={money(cash.base_currency).format(cash.monthly_net)}
                   valueClass={cash.monthly_net >= 0 ? "text-ink" : "text-down"}
                 />
               </div>
               <Meter ratio={cash.savings_rate} />
               <p className="text-xs text-ink-soft">
-                Income: active {money(cash.base_currency).format(cash.active_income)} · passive{" "}
-                {money(cash.base_currency).format(cash.passive_income)}. Expenses: essential{" "}
-                {money(cash.base_currency).format(cash.essential_expenses)} · discretionary{" "}
-                {money(cash.base_currency).format(cash.discretionary_expenses)}. {IN_FORCE}
-                {notCounted(cash) && ` Not counted: ${notCounted(cash)}, as Records → Cash flow shows.`}
+                收入：主动 {money(cash.base_currency).format(cash.active_income)} · 被动{" "}
+                {money(cash.base_currency).format(cash.passive_income)}。支出：必要{" "}
+                {money(cash.base_currency).format(cash.essential_expenses)} · 可自由支配{" "}
+                {money(cash.base_currency).format(cash.discretionary_expenses)}。{IN_FORCE}
+                {notCounted(cash) && `未计入：${notCounted(cash)}，如 记录 → 现金流 所示。`}
                 {undatedLine(cash.undated) && ` ${undatedLine(cash.undated)}`}
               </p>
             </div>

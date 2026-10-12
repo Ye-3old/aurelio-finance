@@ -1,11 +1,11 @@
-/* Which bucket of a situation a holding is shown in — the one rule, and the one
+/* Which bucket of a situation a holding is shown in  the one rule, and the one
    the situation's total depends on.
 
    The page's total is the sum of every holding it loaded. Each bucket's
    subtotal is the sum of the holdings handed to that bucket. The two agree only
    if every holding is handed to exactly one bucket, and they did not: the
    buckets matched a holding's class exactly, and five buckets know five
-   classes while the backend knows eight. `fund_etf` is the one that mattered —
+   classes while the backend knows eight. `fund_etf` is the one that mattered 
    every purchase a PAC makes is written with it (pac.py), and "Start from the
    last one" carries it into the next situation. Measured on a copy of the
    reader's database: "Total €1,900" over a page that listed €400, the other
@@ -13,8 +13,8 @@
    seen, corrected nor removed from its situation.
 
    So the rule is total by construction: a bucket names the classes it holds,
-   and a class no bucket names — `cash`, `real_estate`, none at all, or one
-   invented tomorrow — goes to Other. Never to no bucket.
+   and a class no bucket names  `cash`, `real_estate`, none at all, or one
+   invented tomorrow  goes to Other. Never to no bucket.
 
    Pure, and with no runtime imports, so `tests/buckets.test.ts` runs it under
    Node without a bundler. */
@@ -28,14 +28,14 @@ export type Bucket = {
 };
 
 // Investment buckets shown inside every dated situation. Cash is NOT a bucket
-// — it lives in the live register at the institution level — which is also why
+//  it lives in the live register at the institution level  which is also why
 // a stray `cash` holding is shown in Other rather than hidden.
 export const BUCKETS: readonly Bucket[] = [
-  { cls: "equity", label: "Stocks & ETF", holds: ["equity", "fund_etf"] },
-  { cls: "bond", label: "Bonds", holds: ["bond"] },
-  { cls: "commodity", label: "Commodities", holds: ["commodity"] },
-  { cls: "crypto", label: "Crypto", holds: ["crypto"] },
-  { cls: "other", label: "Other", holds: ["other"] },
+  { cls: "equity", label: "股票与 ETF", holds: ["equity", "fund_etf"] },
+  { cls: "bond", label: "债券", holds: ["bond"] },
+  { cls: "commodity", label: "大宗商品", holds: ["commodity"] },
+  { cls: "crypto", label: "加密货币", holds: ["crypto"] },
+  { cls: "other", label: "其他", holds: ["other"] },
 ];
 
 const FALLBACK = "other";
@@ -59,7 +59,7 @@ export function sortIntoBuckets<H extends { asset_class?: string | null }>(
 
 /** The class a saved holding is written with. A new one takes its bucket's; an
     edited one keeps its own, because a bucket that shows several classes must
-    not rename the ones it did not write — an ETF corrected in "Stocks & ETF"
+    not rename the ones it did not write  an ETF corrected in "Stocks & ETF"
     stays `fund_etf`, and a `cash` row corrected in Other stays `cash`. */
 export function classOnSave(bucket: Bucket, editing: { asset_class?: string | null } | null): string | null {
   return editing ? (editing.asset_class ?? null) : bucket.cls;

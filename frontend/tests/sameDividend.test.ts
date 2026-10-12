@@ -83,25 +83,25 @@ test("the newest comes first, and two on one day by the latest written", () => {
 test("the offer says what the rows are and why to correct one", () => {
   assert.equal(
     offerLine("alfa.mi", "Banca Alfa"),
-    "Already recorded for ALFA.MI at Banca Alfa, still estimated (the market's gross figure, before tax). If the dividend you are entering is one of these, correct it instead: a second row would count it twice.",
+    "Banca Alfa 已有 ALFA.MI 的记录，仍是预估（市场税前总额）。如果你正在录入的分红就是其中之一，请改为更正它：再加一行会重复计算。",
   );
   assert.equal(olderLine(3), null);
-  assert.equal(olderLine(4), "And 1 older one.");
-  assert.equal(olderLine(6), "And 3 older ones.");
+  assert.equal(olderLine(4), "还有 1 笔更早的。");
+  assert.equal(olderLine(6), "还有 3 笔更早的。");
 });
 
 test("a correction says the row keeps its ex-date, and that the date typed is not used", () => {
   assert.equal(
     correctingLine("2026-09-22", "2026-09-29"),
-    "Correcting the dividend of 2026-09-22 with your figures: save to replace its own. Its date stays 2026-09-22, the ex-date the app finds it by, so 2026-09-29 is not used.",
+    "正在用你的数字更正 2026-09-22 的分红：保存即替换原记录。日期保持 2026-09-22 不变：应用按除息日找它：所以 2026-09-29 不会生效。",
   );
   assert.equal(
     correctingLine("2026-09-22", "2026-09-22"),
-    "Correcting the dividend of 2026-09-22 with your figures: save to replace its own.",
+    "正在用你的数字更正 2026-09-22 的分红：保存即替换原记录。",
   );
   assert.equal(
     correctingLine("2026-09-22", "2026-09-29", (d) => d.split("-").reverse().join("/")),
-    "Correcting the dividend of 22/09/2026 with your figures: save to replace its own. Its date stays 22/09/2026, the ex-date the app finds it by, so 29/09/2026 is not used.",
+    "正在用你的数字更正 22/09/2026 的分红：保存即替换原记录。日期保持 22/09/2026 不变：应用按除息日找它：所以 29/09/2026 不会生效。",
   );
 });
 
@@ -116,7 +116,7 @@ test("a dividend the app recorded is known by its stamp, which an edit keeps", (
 test("moving a dividend the app recorded off its ex-date is said", () => {
   assert.equal(
     movedOffItsDay(row({ estimated: false }), "2026-09-29"),
-    "The app recorded this dividend on its ex-date, 2026-09-22, and finds it by that day. Moved to 2026-09-29, the dividend of 2026-09-22 is recorded again at the next start, unless this account has a situation dated on or after it.",
+    "应用在除息日 2026-09-22 记下了这笔分红，并按该日期找它。若改到 2026-09-29，下次启动时 2026-09-22 的分红会被再次记入，除非该账户有一份日期不早于它的快照。",
   );
 });
 

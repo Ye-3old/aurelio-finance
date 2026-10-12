@@ -9,14 +9,14 @@ import { test } from "node:test";
 import { dividendWord, policyWord } from "../src/components/dividendLine.ts";
 
 test("a stated policy is said, whatever the history lists", () => {
-  assert.equal(dividendWord("acc", "2026-09-15"), "Accumulating");
-  assert.equal(dividendWord("dist", null), "Distributing");
-  assert.equal(dividendWord("dist", "2026-09-15"), "Distributing");
+  assert.equal(dividendWord("acc", "2026-09-15"), "累积分红");
+  assert.equal(dividendWord("dist", null), "现金分红");
+  assert.equal(dividendWord("dist", "2026-09-15"), "现金分红");
 });
 
 test("with no policy stated, the line says when the holding last paid", () => {
-  assert.equal(dividendWord(null, "2026-09-15"), "last dividend 2026-09-15");
-  assert.equal(dividendWord("", "2024-08-07"), "last dividend 2024-08-07");
+  assert.equal(dividendWord(null, "2026-09-15"), "最近分红 2026-09-15");
+  assert.equal(dividendWord("", "2024-08-07"), "最近分红 2024-08-07");
 });
 
 test("with no policy and no dividend listed, the line says nothing", () => {

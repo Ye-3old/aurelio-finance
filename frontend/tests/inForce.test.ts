@@ -23,7 +23,7 @@ function flow(side: Side, id: number, frequency: string | null, start: string | 
 const NOTHING = { scheduled: [], ended: [], undated: 0 };
 
 test("the figures say what they are", () => {
-  assert.equal(IN_FORCE, "In force today, as a monthly run-rate; one-off items excluded.");
+  assert.equal(IN_FORCE, "按今天生效的收支折算成月度金额；一次性项目不计入。");
 });
 
 test("nothing left out says nothing", () => {
@@ -36,7 +36,7 @@ test("what starts later and what has ended are counted apart", () => {
     ended: [flow("expense", 2, "monthly", "2025-01-01", "2026-06-30")],
     undated: 0,
   };
-  assert.equal(notCounted(summary), "1 income that starts later, 1 expense that has ended");
+  assert.equal(notCounted(summary), "1 笔收入尚未开始；1 笔支出已结束");
 });
 
 test("several of one kind are counted together, with the verb agreeing", () => {
@@ -54,7 +54,7 @@ test("several of one kind are counted together, with the verb agreeing", () => {
   };
   assert.equal(
     notCounted(summary),
-    "1 income and 2 expenses that start later, 2 incomes that have ended",
+    "1 笔收入和 2 笔支出尚未开始；2 笔收入已结束",
   );
 });
 
@@ -69,23 +69,23 @@ test("a one-off is never in the monthly figures, so it is not counted as left ou
 
 test("a flow with no first payment date is said to be counted", () => {
   assert.equal(undatedLine(0), null);
-  assert.equal(undatedLine(1), "1 flow with no first payment date is counted as in force.");
-  assert.equal(undatedLine(3), "3 flows with no first payment date are counted as in force.");
+  assert.equal(undatedLine(1), "1 笔没有首次付款日期的收支按生效计入。");
+  assert.equal(undatedLine(3), "3 笔没有首次付款日期的收支按生效计入。");
 });
 
 test("a row that starts later says when, and that it is not counted until then", () => {
   const summary = { ...NOTHING, scheduled: [flow("income", 1, "monthly", "2026-10-30", null)] };
-  assert.equal(leftOutLine(summary, "income", 1), "Starts on 2026-10-30: not counted until then.");
+  assert.equal(leftOutLine(summary, "income", 1), "2026-10-30 开始，此前不计入。");
 });
 
 test("a row that has ended says when, and that it is no longer counted", () => {
   const summary = { ...NOTHING, ended: [flow("expense", 2, "monthly", "2025-01-01", "2026-06-30")] };
-  assert.equal(leftOutLine(summary, "expense", 2), "Ended on 2026-06-30: no longer counted.");
+  assert.equal(leftOutLine(summary, "expense", 2), "2026-06-30 结束，之后不再计入。");
 });
 
 test("a one-off still to come says the day it falls on", () => {
   const summary = { ...NOTHING, scheduled: [flow("expense", 7, "one_off", "2026-11-15", null)] };
-  assert.equal(leftOutLine(summary, "expense", 7), "On 2026-11-15, once: not in the monthly figures.");
+  assert.equal(leftOutLine(summary, "expense", 7), "2026-11-15 一次性发生，不计入月度金额。");
 });
 
 test("a row in force carries no line, and an income is never an expense", () => {

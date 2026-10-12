@@ -97,8 +97,8 @@ export function InstrumentPicker({
   onChange,
   onPick,
   owned,
-  placeholder = "Name (type to search)",
-  label = "Asset name",
+  placeholder = "名称（输入搜索）",
+  label = "资产名称",
   mark,
 }: {
   value: string;
@@ -234,9 +234,9 @@ export function InstrumentPicker({
           {mine.length > 0 && (
             <div className="flex items-baseline justify-between border-b border-rule bg-tint px-3 py-1.5">
               <span className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-olive">
-                Positions you already hold
+                你已持有的持仓
               </span>
-              <span className="text-[0.6rem] text-ink-faint">adds to them, not beside them</span>
+              <span className="text-[0.6rem] text-ink-faint">是加到它们里头，不是并排新开</span>
             </div>
           )}
           {mine.map((o) => (
@@ -259,7 +259,7 @@ export function InstrumentPicker({
                 <span className="block truncate text-sm text-ink">{o.name}</span>
                 {o.institution && (
                   <span className="block truncate text-[0.65rem] text-ink-soft">
-                    held at {o.institution}
+                    持有于 {o.institution}
                   </span>
                 )}
               </span>
@@ -268,10 +268,10 @@ export function InstrumentPicker({
           {(liveBusy || (live?.results.length ?? 0) > 0 || live?.reachable === false) && (
             <div className="flex items-baseline justify-between border-b border-rule bg-tint px-3 py-1.5">
               <span className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-olive">
-                Shares, ETFs &amp; crypto (live)
+                股票、ETF 与加密货币（实时）
               </span>
               <span className="text-[0.6rem] text-ink-faint">
-                {liveBusy ? "looking up…" : "the only source of a quotable symbol"}
+                {liveBusy ? "查询中…" : "可报价代码的唯一来源"}
               </span>
             </div>
           )}
@@ -281,9 +281,9 @@ export function InstrumentPicker({
             // someone to correct a symbol that was right all along.
             <div
               className="border-b border-hair px-3 py-1.5 text-[0.65rem] text-warn"
-              title="Nothing answered, which is a different claim from 'this instrument does not exist'. The catalogue lane below is local and unaffected."
+              title="没有任何回应，这和「该金融产品不存在」是两回事。下面的目录通道在本地，不受影响。"
             >
-              Live source did not answer. This says nothing about the instrument.
+              实时数据源没有回应。这不能说明该金融产品有任何问题。
             </div>
           )}
           {(live?.results ?? []).map((r) => {
@@ -324,7 +324,7 @@ export function InstrumentPicker({
                   {expiring && (
                     <span
                       className="block text-[0.6rem] text-warn"
-                      title="A futures contract expires and rolls, so a position pinned to this symbol would measure a different contract in a few months without saying so."
+                      title="期货合约会到期换月，绑定这个代码的持仓几个月后衡量的就会是另一张合约，而且不会吱声。"
                     >
                       ⚠ dated contract: expires and rolls
                     </span>
@@ -342,16 +342,16 @@ export function InstrumentPicker({
             // that was asked for. It is not hidden, it is placed.
             <div className="flex items-baseline justify-between border-b border-rule bg-tint px-3 py-1.5">
               <span className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-olive">
-                Funds &amp; ETFs (UCITS catalogue)
+                基金与 ETF（UCITS 目录）
               </span>
               <span className="text-[0.6rem] text-ink-faint">
-                shares and coins are not in here
+                股票和币不在这里
               </span>
             </div>
           )}
           {result?.coverage === "partial" && families.length > 0 && (
             <div className="border-b border-hair px-3 py-1.5 text-[0.65rem] text-warn">
-              Not every word matched. These are the closest, keep typing to narrow.
+              不是每个词都匹配上了。以下是最接近的，继续输入可缩小范围。
             </div>
           )}
           {families.map((f) => (
@@ -379,7 +379,7 @@ export function InstrumentPicker({
                     <span className="block truncate text-sm text-ink">{m.name}</span>
                     <span className="block truncate text-[0.65rem] text-ink-soft">
                       <span className={m.distribution_policy === "dist" ? "text-up" : undefined}>
-                        {policyWord(m.distribution_policy) ?? "unknown"}
+                        {policyWord(m.distribution_policy) ?? "未知"}
                       </span>
                       {" · "}
                       {m.isin} · {detail(m)}
@@ -391,10 +391,8 @@ export function InstrumentPicker({
           ))}
           {rows !== 0 && families.length === 0 && (
             <div className="px-3 py-2 text-xs text-ink-soft">
-              Nothing in the UCITS fund catalogue matches. For a share, a coin or a
-              US-domiciled ETF that is the expected answer rather than a failure:
-              type the name and the ticker yourself, and the live check below will
-              confirm what it resolved to.
+              UCITS 基金目录里没有匹配项。对股票、币或美国注册的 ETF 来说这是正常结果而不是故障：
+              自己输入名称和代码，下面的实时查询会确认它解析成了什么。
             </div>
           )}
           {/* Always last, always present: the catalogue covers UCITS funds and
@@ -404,8 +402,7 @@ export function InstrumentPicker({
             onClick={() => setOpen(false)}
             className="w-full border-t border-rule px-3 py-2 text-left text-xs text-ink-soft hover:bg-tint"
           >
-            Use “<b className="text-ink">{value.trim()}</b>” as it is, with nothing from the
-            catalogue attached
+            原样使用「<b className="text-ink">{value.trim()}</b>」，不附带目录里的任何信息
           </button>
         </div>
       )}

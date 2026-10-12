@@ -81,17 +81,17 @@ test("days between two calendar dates", () => {
 });
 
 test("one day is a day, two are days", () => {
-  assert.equal(dayCount(1), "1 day");
-  assert.equal(dayCount(2), "2 days");
-  assert.equal(dayCount(18), "18 days");
+  assert.equal(dayCount(1), "1 天");
+  assert.equal(dayCount(2), "2 天");
+  assert.equal(dayCount(18), "18 天");
 });
 
 test("a date's age in words: today, one day, several", () => {
   process.env.TZ = "Europe/Rome";
   const now = new Date(2026, 9, 8, 11, 30, 0);
-  assert.equal(ageWords("2026-10-08", now), "today");
-  assert.equal(ageWords("2026-10-07", now), "1 day ago");
-  assert.equal(ageWords("2026-10-02", now), "6 days ago");
+  assert.equal(ageWords("2026-10-08", now), "今天");
+  assert.equal(ageWords("2026-10-07", now), "1 天前");
+  assert.equal(ageWords("2026-10-02", now), "6 天前");
   // A date after today (the clock behind the market's) is not "-1 days ago".
-  assert.equal(ageWords("2026-10-09", now), "today");
+  assert.equal(ageWords("2026-10-09", now), "今天");
 });

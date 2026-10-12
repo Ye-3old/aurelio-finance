@@ -15,6 +15,6 @@
 export function dividendsNote(count: number): string | null {
   if (count <= 0) return null;
   return count === 1
-    ? "The dividend is the market's gross figure, before tax: correct it with what your broker credited."
-    : "The dividends are the market's gross figures, before tax: correct each with what your broker credited.";
+    ? "分红采用市场税前总额，请用券商实际入账的金额更正。"
+    : "分红采用市场税前总额，请逐笔用券商实际入账的金额更正。";
 }

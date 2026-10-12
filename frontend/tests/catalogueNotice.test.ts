@@ -25,24 +25,24 @@ test("nothing is said once the catalogue has funds, whatever its download is doi
 
 test("an empty catalogue says where its download stands", () => {
   const downloading = catalogueNotice({ rows: 0, state: "downloading", retry_after: null }, clock);
-  assert.match(downloading ?? "", /^The fund catalogue is downloading by itself\./);
+  assert.match(downloading ?? "", /^基金目录正在自动下载。/);
 
   const failed = catalogueNotice(
     { rows: 0, state: "failed", retry_after: "2026-10-04T12:10:00+00:00" },
     clock,
   );
-  assert.match(failed ?? "", /could not be downloaded from justETF/);
-  assert.match(failed ?? "", /when it is next opened or reloaded, from 12:10\./);
+  assert.match(failed ?? "", /无法从 justETF 下载/);
+  assert.match(failed ?? "", /下次打开或刷新页面时自动重试（最早 12:10 起）/);
 
   const notStarted = catalogueNotice({ rows: 0, state: "not_started", retry_after: null }, clock);
-  assert.match(notStarted ?? "", /Reload the page to start it\./);
+  assert.match(notStarted ?? "", /刷新页面即可开始。/);
 });
 
 test("every sentence keeps the typed name usable and offers no button", () => {
   const states: CatalogueState["state"][] = ["downloading", "failed", "not_started"];
   for (const state of states) {
     const said = catalogueNotice({ rows: 0, state, retry_after: null }, clock) ?? "";
-    assert.match(said, /Meanwhile, what you type can be used as it is\.$/);
+    assert.match(said, /在此期间，你输入的内容可以照常使用。$/);
     assert.doesNotMatch(said, /Download it now|rows|fetched_at|retry_after/);
     assert.ok(!said.includes(EM_DASH), "no em dash in what the reader sees");
   }

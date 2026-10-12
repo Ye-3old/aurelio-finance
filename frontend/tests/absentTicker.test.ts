@@ -16,7 +16,7 @@ const draft = (over: Partial<HoldingDraft>): HoldingDraft => ({
 
 // Since brief AF a row with no policy has its dividends followed through its
 // own history, which needs the ticker: without one, whatever it pays is lost.
-const UNPRICED_UNFOLLOWED = "Without a ticker it will not be priced and any dividends it pays will not be collected.";
+const UNPRICED_UNFOLLOWED = "没有代码就不会有价格，它派的分红也收不到。";
 
 test("nothing before there is a name, and nothing once a ticker is typed", () => {
   assert.equal(absentTickerCost(draft({ name: "  " })), null);
@@ -35,42 +35,40 @@ test("a total with an ISIN loses nothing for lacking a ticker", () => {
 test("price and dividends: only a ticker fixes them, so only a ticker is named", () => {
   assert.equal(absentTickerCost(draft({})), UNPRICED_UNFOLLOWED);
   assert.equal(absentTickerCost(draft({ assetClass: "fund_etf" })), UNPRICED_UNFOLLOWED);
-  assert.equal(absentTickerCost(draft({ policy: "acc" })), "Without a ticker it will not be priced.");
+  assert.equal(absentTickerCost(draft({ policy: "acc" })), "没有代码就不会有价格。");
   assert.equal(
     absentTickerCost(draft({ policy: "dist" })),
-    "Without a ticker it will not be priced and its dividends will not be collected.",
+    "没有代码就不会有价格，它的分红也收不到。",
   );
 });
 
 test("a coin pays no dividend, so it is told only about its price", () => {
   // pac._follows_dividends never asks Yahoo about crypto with no policy
-  assert.equal(absentTickerCost(draft({ assetClass: "crypto" })), "Without a ticker it will not be priced.");
+  assert.equal(absentTickerCost(draft({ assetClass: "crypto" })), "没有代码就不会有价格。");
 });
 
 test("the look-through: a ticker or an ISIN fixes it, so both are named, in one sentence per state", () => {
   assert.equal(
     absentTickerCost(draft({ isin: "", mode: "total" })),
-    "Without a ticker or an ISIN it will not be looked through.",
+    "没有代码或 ISIN 就无法穿透。",
   );
   // a total is paid no dividends by the app with or without a ticker: pac.py
   // needs a quantity, so a distributing total is not told it loses them
   assert.equal(
     absentTickerCost(draft({ isin: "", mode: "total", policy: "dist" })),
-    "Without a ticker or an ISIN it will not be looked through.",
+    "没有代码或 ISIN 就无法穿透。",
   );
   assert.equal(
     absentTickerCost(draft({ isin: "" })),
-    "Without a ticker it will not be priced and any dividends it pays will not be collected, " +
-      "and without a ticker or an ISIN it will not be looked through.",
+    "没有代码就不会有价格，它派的分红也收不到，另外没有代码或 ISIN 就无法穿透。",
   );
   assert.equal(
     absentTickerCost(draft({ isin: "", policy: "acc" })),
-    "Without a ticker it will not be priced, and without a ticker or an ISIN it will not be looked through.",
+    "没有代码就不会有价格，另外没有代码或 ISIN 就无法穿透。",
   );
   assert.equal(
     absentTickerCost(draft({ isin: "", policy: "dist" })),
-    "Without a ticker it will not be priced and its dividends will not be collected, " +
-      "and without a ticker or an ISIN it will not be looked through.",
+    "没有代码就不会有价格，它的分红也收不到，另外没有代码或 ISIN 就无法穿透。",
   );
 });
 
@@ -80,6 +78,6 @@ test("an ISIN is judged as the backend will store it: trimmed, upper-cased, unsp
   assert.equal(absentTickerCost(draft({ isin: " ie00b4l5y983 ", mode: "total" })), null);
   assert.equal(
     absentTickerCost(draft({ isin: "IE00B4L5Y98", mode: "total" })),
-    "Without a ticker or an ISIN it will not be looked through.",
+    "没有代码或 ISIN 就无法穿透。",
   );
 });

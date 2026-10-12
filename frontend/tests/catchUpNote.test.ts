@@ -13,13 +13,13 @@ test("no dividend recorded, nothing added", () => {
 test("one dividend: gross, and corrected with the broker's credit", () => {
   assert.equal(
     dividendsNote(1),
-    "The dividend is the market's gross figure, before tax: correct it with what your broker credited.",
+    "分红采用市场税前总额，请用券商实际入账的金额更正。",
   );
 });
 
 test("several dividends: each corrected on its own", () => {
   assert.equal(
     dividendsNote(4),
-    "The dividends are the market's gross figures, before tax: correct each with what your broker credited.",
+    "分红采用市场税前总额，请逐笔用券商实际入账的金额更正。",
   );
 });

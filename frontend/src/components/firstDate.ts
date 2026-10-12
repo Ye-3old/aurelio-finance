@@ -110,42 +110,42 @@ export function pastBuysWarning(p: PastBuys, start: string): {
   const n = p.dates.length;
   const what =
     n === 1
-      ? `a buy into your records, dated ${p.dates[0]}`
-      : `${n} buys into your records, dated from ${p.dates[0]} to ${p.dates[n - 1]}`;
+      ? `一笔买入记录，日期 ${p.dates[0]}`
+      : ` ${n} 笔买入记录，日期从 ${p.dates[0]} 到 ${p.dates[n - 1]}`;
   return {
-    lead: p.hasRun ? "This change adds dates before today." : `${start} is in the past.`,
-    body: `Saved like this, the app writes ${what}, priced at Yahoo's close rather than at your broker's fills, and marked estimated.`,
+    lead: p.hasRun ? "这次修改会新增今天之前的日期。" : `${start} 在过去。`,
+    body: `这样保存，应用会写入${what}，按 Yahoo 收盘价而非券商实际成交价计，并标记为预估。`,
     alternative: p.next
-      ? "Already running at your broker? Then let everything up to today be the broker's: start the plan on its next date, and enter today's units and cash from its statement on the account's page."
+      ? "券商那边已经在投了？那就把到今天为止的都算作券商的：从下一个日期启动计划，并在账户页按对账单录入今天的份额和现金。"
       : null,
-    button: p.next ? `Start on ${p.next}` : null,
+    button: p.next ? `从 ${p.next} 启动` : null,
   };
 }
 
 /** Said under the dates once the one press has set the next date. */
 export function startsLine(next: string): string {
-  return `Starts ${next}. Once it is saved, enter today's units and cash from the broker's statement on the account's page.`;
+  return `${next} 启动。保存后，请到账户页按券商对账单录入今天的份额和现金。`;
 }
 
 /** Said above the plans once a plan set that way is saved; the accounts it
     touches follow as links. */
 export function afterSaveLine(name: string, start: string): string {
-  return `${name} starts on ${start}. Record today's situation and cash balance from the broker's statement (start the situation from the last one, so the other positions stay):`;
+  return `${name} 将从 ${start} 启动。请按券商对账单录入今天的快照和现金余额（快照从上一份复制起步，其他持仓才会保留）：`;
 }
 
 /** A flow's date. A one-off happens on it; anything else is first paid on it,
     and repeats on its day. */
 export function flowDateLabel(frequency: string): string {
-  return frequency === "one_off" ? "on" : "first payment";
+  return frequency === "one_off" ? "发生于" : "首次扣款";
 }
 
 /** The line in view under the Income and Expenses titles. */
 export const FIRST_PAYMENT_NOTE =
-  "The first payment's day is the day it repeats on. A past date is safe: payments before the account's latest balance are already in it.";
+  "首次扣款的那一天就是以后每次重复的日子。填过去的日期是安全的：账户最近一次余额之前的扣款已经包含在余额里了。";
 
 /** A PAC's date. */
-export const PLAN_DATE_LABEL = "first buy";
+export const PLAN_DATE_LABEL = "首次买入";
 
 /** The line in view under the PAC title: where a buy's figures come from. */
 export const PLAN_NOTE =
-  "Each date's buy is written the first time the app opens after that day, at its market close (converted at that day's ECB rate when the fund trades in another currency), and marked estimated.";
+  "每个日期的买入会在该日之后应用第一次打开时写入，按当天收盘价计（基金以其他货币交易时按当天欧洲央行汇率换算），并标记为预估。";

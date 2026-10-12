@@ -37,11 +37,13 @@ import {
 const PX = 14;
 const SLACK = 4;
 
-/** The rendered width of `text` at 14px, weight 400, kerning left out. */
+/** The rendered width of `text` at 14px, weight 400, kerning left out.
+    Full-width CJK glyphs (the questions are Chinese now) fall back to a
+    1em advance, which is how the font lays them out whatever it is. */
 function width(text: string): number {
   let units = 0;
   for (const ch of text) {
-    const advance = ARCHIVO_400[ch];
+    const advance = ARCHIVO_400[ch] ?? (ch.codePointAt(0)! >= 0x2e80 ? UNITS_PER_EM : undefined);
     assert.ok(advance !== undefined, `no advance for ${JSON.stringify(ch)}: extend archivoAdvances.ts`);
     units += advance;
   }

@@ -44,7 +44,7 @@ function fmtUnits(n: number): string {
    because they are different facts. */
 function label(o: OmittedPosition): string {
   const name = shortName(o.asset_name);
-  return o.units_missing ? `${fmtUnits(o.units_missing)} units of ${name}` : name;
+  return o.units_missing ? `${name} 的 ${fmtUnits(o.units_missing)} 份` : name;
 }
 
 /* When the positions were last on record.
@@ -59,15 +59,15 @@ function lastSeenPhrase(items: OmittedPosition[]): string {
   const first = dates[0];
   const last = dates[dates.length - 1];
   return first === last
-    ? `last seen ${fmtDate(first)}`
-    : `last seen between ${fmtDate(first)} and ${fmtDate(last)}`;
+    ? `最后出现于 ${fmtDate(first)}`
+    : `最后出现于 ${fmtDate(first)} 至 ${fmtDate(last)} 之间`;
 }
 
 export function OmissionsNotice({
   items,
   /** What the same situations declared that the app was not expecting. Usually
-      the same money described differently — three rows becoming twenty-one is
-      a portfolio written out in full, not a portfolio lost — and the reader is
+      the same money described differently  three rows becoming twenty-one is
+      a portfolio written out in full, not a portfolio lost  and the reader is
       the only one who can tell which. Naming only the first half reads as a
       loss every time. */
   arrivals = [],
@@ -91,45 +91,42 @@ export function OmissionsNotice({
       className="border-l-2 border-warn bg-warn-tint px-3 py-2 text-xs text-warn"
       // The explanation lives here, out of the way. A warning sitting above a
       // page of figures has to be read at a glance, and a paragraph is not read
-      // at a glance — it is skipped, which makes it worse than nothing.
-      title="A newer situation stopped accounting for these, so their value left the totals and nothing on record says where it went. Selling is a dated statement with proceeds; forgetting is the absence of one."
+      // at a glance  it is skipped, which makes it worse than nothing.
+      title="较新的一份快照不再包含这些持仓，它们的市值随之退出合计，而记录里没有说去了哪里。卖出是一条带日期和回款的记录；遗忘则什么记录都没有。"
     >
-      <b>{money(baseCurrency).format(total)}</b> left the totals with nothing saying where it went ·{" "}
+      <b>{money(baseCurrency).format(total)}</b> 的市值退出了合计，没有记录说明去向 ·{" "}
       {items.map((o, i) => (
         <span key={`${o.institution ?? ""}-${o.symbol ?? o.asset_name}`}>
           {i > 0 && " · "}
-          <span title={`${o.asset_name}, last seen ${fmtDate(o.last_seen)}`}>
+          <span title={`${o.asset_name}，最后出现于 ${fmtDate(o.last_seen)}`}>
             {label(o)}
           </span>
         </span>
       ))}{" "}
-      <span className="text-ink-faint">({lastSeenPhrase(items)})</span>
+      <span className="text-ink-faint">（{lastSeenPhrase(items)}）</span>
       {arrivals.length > 0 && (
         /* The second number, and the reason it is here: the same situation
            declared things the app had never heard of. If they are the same
-           money, nothing was lost and the account was described better — and
+           money, nothing was lost and the account was described better  and
            only the reader knows. Without this line that case is indistinguish-
            able from a disappearance, and it is the one that actually happened
            the first time this notice ran on real data. */
         <div className="mt-0.5">
-          <b>{money(baseCurrency).format(arrived)}</b> was declared in the same{" "}
-          {arrivals.length === 1 ? "situation" : "situations"} under{" "}
-          {arrivals.length === 1 ? "a name" : "names"} the app did not know
-          {": "}
+          同一份快照里还申报了 <b>{money(baseCurrency).format(arrived)}</b>，用的是本应用不认识的名字：
           {arrivals.map((a, i) => (
             <span key={`${a.institution ?? ""}-${a.symbol ?? a.asset_name}`}>
               {i > 0 && " · "}
-              <span title={`${a.asset_name}, declared ${fmtDate(a.appeared_on)}`}>
+              <span title={`${a.asset_name}，申报于 ${fmtDate(a.appeared_on)}`}>
                 {shortName(a.asset_name, 24)}
               </span>
             </span>
           ))}
-          . <span className="text-ink-soft">Same holdings, written out?</span>
+          。<span className="text-ink-soft">会不会是同样的持仓换了个写法？</span>
         </div>
       )}
       <div className="mt-0.5 text-ink-soft">
-        Sold → record a <b>close</b>
-        {where ? ` ${where}` : ""}. Dropped by mistake → put it back.
+        若已卖出 → 记一笔<b>清仓</b>
+        {where ? `（${where}）` : ""}。若是误删 → 把它放回去。
       </div>
     </div>
   );

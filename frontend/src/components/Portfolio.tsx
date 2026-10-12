@@ -58,6 +58,16 @@ const pctFmt = new Intl.NumberFormat(locale, {
   signDisplay: "exceptZero",
 });
 
+// Display names for a transaction kind. Purely for the reader: the `kind`
+// values sent to the API stay exactly as they are.
+const KIND_LABEL: Record<string, string> = {
+  buy: "买入",
+  sell: "卖出",
+  dividend: "分红",
+  close: "清仓",
+};
+const kindLabel = (k: string) => KIND_LABEL[k] ?? k;
+
 function toneClass(delta: number | null): string {
   if (delta == null || delta === 0) return "text-ink-soft";
   return delta > 0 ? "text-up" : "text-down";
@@ -97,26 +107,23 @@ function TaxEstimatePanel({ est, baseCurrency }: { est: TaxEstimate; baseCurrenc
     return (
       <div className={cardClass + " bg-tint p-4 text-sm"}>
         <p className="text-ink">
-          No tax rate set, so no estimate is shown here.
+          未设置税率，这里不显示估算。
         </p>
         <p className="mt-1 text-ink-soft">
           {est.taxable_gain > 0 && (
-            <>There is a realized gain of {inBase.format(est.taxable_gain)}. </>
+            <>已实现收益 {inBase.format(est.taxable_gain)}。 </>
           )}
           {est.realized_gain < 0 && (
             <>
-              The realized result is a loss of{" "}
-              {inBase.format(-est.realized_gain)}, which no rate would be applied
-              to anyway.{" "}
+              已实现结果为亏损 {inBase.format(-est.realized_gain)}，本来也不会计税。{" "}
             </>
           )}
           {est.dividends_gross_estimated > 0 && (
             <>
-              {inBase.format(est.dividends_gross_estimated)} of dividends still
-              show the market&rsquo;s gross figure.{" "}
+              其中 {inBase.format(est.dividends_gross_estimated)} 的分红仍是市场税前总额。{" "}
             </>
           )}
-          Set your rate in Profile &rarr; Tax.
+          请在 档案 → 税 中设置税率。
         </p>
       </div>
     );
@@ -126,17 +133,16 @@ function TaxEstimatePanel({ est, baseCurrency }: { est: TaxEstimate; baseCurrenc
     <div className={cardClass + " bg-tint p-4"}>
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
         <span className="text-[0.65rem] uppercase tracking-[0.12em] text-olive">
-          Estimated tax{est.country ? ` · ${est.country}` : ""}
+          预估税款{est.country ? ` · ${est.country}` : ""}
         </span>
         {est.total != null ? (
           <span className="text-sm text-ink-soft">
             <span className="font-semibold text-ink">{inBase.format(est.total)}</span>{" "}
-            estimated, and counted in none of the totals above
+            为预估值，未计入上方任何合计
           </span>
         ) : (
           <span className="text-sm text-warn">
-            No total: you have not set a rate for {est.missing_rates.join(" or ")},
-            and adding up only the half that can be worked out would understate it.
+            无法给出合计：你还没有为 {est.missing_rates.join(" 或 ")} 设置税率，只把算得出的一半加起来会低估。
           </span>
         )}
       </div>
@@ -150,17 +156,17 @@ function TaxEstimatePanel({ est, baseCurrency }: { est: TaxEstimate; baseCurrenc
             EUR 0 at 26% = EUR 0" is a true row that says nothing. */}
         {est.capital_gains_tax != null && est.realized_gain < 0 && (
           <p>
-            Realized result is a loss of{" "}
+            已实现结果为亏损{" "}
             <span className="font-semibold text-down">
               {inBase.format(-est.realized_gain)}
             </span>{" "}
-            (nothing estimated on it)
+            （不计税）
           </p>
         )}
         {est.capital_gains_tax != null && est.realized_gain > 0 && (
           <p>
-            Realized gain {inBase.format(est.taxable_gain)} at{" "}
-            <span className="text-ink">{est.capital_gains_rate}%</span> ={" "}
+            已实现收益 {inBase.format(est.taxable_gain)}，按{" "}
+            <span className="text-ink">{est.capital_gains_rate}%</span> 计 ={" "}
             <span className="font-semibold text-ink">
               {inBase.format(est.capital_gains_tax)}
             </span>
@@ -168,16 +174,15 @@ function TaxEstimatePanel({ est, baseCurrency }: { est: TaxEstimate; baseCurrenc
         )}
         {est.dividend_withholding != null && est.dividends_gross_estimated > 0 && (
           <p>
-            Gross dividends {inBase.format(est.dividends_gross_estimated)} at{" "}
-            <span className="text-ink">{est.dividend_withholding_rate}%</span> ={" "}
+            税前分红总额 {inBase.format(est.dividends_gross_estimated)}，按{" "}
+            <span className="text-ink">{est.dividend_withholding_rate}%</span> 计 ={" "}
             <span className="font-semibold text-ink">
               {inBase.format(est.dividend_withholding)}
             </span>
             {est.dividends_recorded_net > 0 && (
               <span className="text-ink-faint">
                 {" "}
-                · the {inBase.format(est.dividends_recorded_net)} you corrected by
-                hand is already net and is left alone
+                · 你手工更正的 {inBase.format(est.dividends_recorded_net)} 已是税后金额，保持不变
               </span>
             )}
           </p>
@@ -237,8 +242,8 @@ function staleNote(r: PortfolioData["rows"][number]): string | null {
   if (days == null || days < STALE_AFTER_DAYS || !r.observed_on) return null;
   const when = fmtDate(r.observed_on);
   return r.market_value == null
-    ? `value from ${when} (${days} days): nothing can price this, only you can refresh it`
-    : `priced today, but ${days} days since anyone confirmed you hold this many (${when})`;
+    ? `取值自 ${when}（${days} 天前）：无人能为它报价，只有你能刷新`
+    : `今日有报价，但已有 ${days} 天没人确认你持有这么多（${when}）`;
 }
 
 export default function Portfolio({
@@ -298,7 +303,7 @@ export default function Portfolio({
       setAnchors(a);
       setListing(l);
     } catch (err) {
-      setError(apiError(err, "Could not load the portfolio. Is the backend running on :8000?"));
+      setError(apiError(err, "无法加载持仓。后端是否在 :8000 上运行？"));
     } finally {
       setLoading(false);
       setPricing(false);
@@ -338,7 +343,7 @@ export default function Portfolio({
     window.setTimeout(() => growing.disconnect(), 2500);
   }, [focus, loading, data, onFocused]);
 
-  if (loading) return <p className="text-ink-soft">Loading…</p>;
+  if (loading) return <p className="text-ink-soft">加载中…</p>;
   if (error) return <p className="text-down">{error}</p>;
   if (!data) return null;
 
@@ -360,20 +365,20 @@ export default function Portfolio({
   return (
     <div className="space-y-10">
     <Section
-      title="Portfolio"
-      hint="Your investment positions (latest situation of each institution). Refresh to pull live market prices and see profit/loss vs the recorded value."
+      title="持仓"
+      hint="你的投资持仓（每个机构的最新快照）。刷新可拉取实时行情，并查看相对记录成本的盈亏。"
     >
       <div className="flex flex-wrap items-center gap-3">
         <button onClick={() => load(true)} disabled={pricing} className={btnClass}>
-          {pricing ? "Pricing…" : "↻ Refresh market prices"}
+          {pricing ? "刷新行情中…" : "↻ 刷新市场行情"}
         </button>
         {data.priced && (
           <span className="text-sm text-ink-soft">
-            Market{" "}
+            市场价{" "}
             <span className="font-semibold text-ink">
-              {data.total_market != null ? money(data.base_currency).format(data.total_market) : "unknown"}
+              {data.total_market != null ? money(data.base_currency).format(data.total_market) : "未知"}
             </span>{" "}
-            vs recorded {money(data.base_currency).format(data.total_book)}
+            对比记录 {money(data.base_currency).format(data.total_book)}
             {anyDelta && (
               <span
                 className={"ml-2 font-semibold " + toneClass(pricedDelta)}
@@ -381,7 +386,7 @@ export default function Portfolio({
                 {pricedDelta >= 0 ? "+" : ""}
                 {money(data.base_currency).format(pricedDelta)}
                 <span className="ml-1 text-xs font-normal text-ink-faint">
-                  on priced rows
+                  已报价持仓的合计
                 </span>
               </span>
             )}
@@ -392,12 +397,12 @@ export default function Portfolio({
             read as a share of a number smaller than itself. */}
         {data.priced && carried > 0 && (
           <span className="text-xs text-ink-faint">
-            {money(data.base_currency).format(carried)} of that total is what you last recorded, not priced
+            其中 {money(data.base_currency).format(carried)} 是你上次记录的值，并非市场价
           </span>
         )}
         {!data.priced && (
           <span className="text-sm text-ink-soft">
-            Recorded total <span className="font-semibold text-ink">{money(data.base_currency).format(data.total_book)}</span>
+            记录成本合计 <span className="font-semibold text-ink">{money(data.base_currency).format(data.total_book)}</span>
           </span>
         )}
         {(data.prices_as_of || data.fx_as_of) && (
@@ -413,18 +418,18 @@ export default function Portfolio({
                 old when it was. */}
             {data.prices_as_of && (
               <>
-                prices as of {fmtDate(data.prices_as_of)} ({ageWords(data.prices_as_of)})
+                行情截至 {fmtDate(data.prices_as_of)}（{ageWords(data.prices_as_of)}）
               </>
             )}
             {data.prices_as_of && data.fx_as_of && " · "}
-            {data.fx_as_of && <>FX ECB {fmtDate(data.fx_as_of)}</>}
+            {data.fx_as_of && <>ECB 汇率 {fmtDate(data.fx_as_of)}</>}
           </span>
         )}
         {(data.total_realized !== 0 || data.total_dividends !== 0) && (
           <span className="text-sm text-ink-soft">
             {data.total_realized !== 0 && (
               <>
-                Realized P/L{" "}
+                已实现盈亏{" "}
                 <span className={"font-semibold " + toneClass(data.total_realized)}>
                   {data.total_realized >= 0 ? "+" : ""}
                   {money(data.base_currency).format(data.total_realized)}
@@ -432,7 +437,7 @@ export default function Portfolio({
               </>
             )}
             {data.total_dividends !== 0 && (
-              <> · dividends collected {money(data.base_currency).format(data.total_dividends)}</>
+              <> · 已收分红 {money(data.base_currency).format(data.total_dividends)}</>
             )}
           </span>
         )}
@@ -451,9 +456,8 @@ export default function Portfolio({
       <UnconvertedNotice items={data.unconverted ?? []} baseCurrency={data.base_currency} />
 
       {data.rows.length === 0 ? (
-        <EmptyState title="Nothing invested yet">
-          Add an institution in Records → Wealth, then a dated situation and the holdings it
-          contains. Give each one a ticker and this table fills in on its own.
+        <EmptyState title="还没有任何投资">
+          先在 记录 → 财富 中添加机构，再添加带日期的快照及其包含的持仓。给每个持仓填上代码，这张表就会自动填好。
         </EmptyState>
       ) : (
         // Dense view: the ruled-ledger treatment — alternating row tint,
@@ -463,14 +467,14 @@ export default function Portfolio({
           <table className="w-full border-collapse text-left text-sm [&_td:not(:first-child)]:border-l [&_td:not(:first-child)]:border-hair [&_tbody_tr:nth-child(even)]:bg-tint">
             <thead>
               <tr className="border-b border-rule text-[0.65rem] uppercase tracking-[0.12em] text-olive">
-                <th className="px-4 py-2 font-semibold">Asset</th>
-                <th className="px-4 py-2 font-semibold">Institution</th>
-                <th className="px-4 py-2 text-right font-semibold">Qty</th>
-                <th className="px-4 py-2 text-right font-semibold">Avg cost</th>
-                <th className="px-4 py-2 text-right font-semibold">Recorded</th>
-                <th className="px-4 py-2 text-right font-semibold">Live price</th>
-                <th className="px-4 py-2 text-right font-semibold">Worth now</th>
-                <th className="px-4 py-2 text-right font-semibold">P/L vs recorded</th>
+                <th className="px-4 py-2 font-semibold">资产</th>
+                <th className="px-4 py-2 font-semibold">机构</th>
+                <th className="px-4 py-2 text-right font-semibold">数量</th>
+                <th className="px-4 py-2 text-right font-semibold">平均成本</th>
+                <th className="px-4 py-2 text-right font-semibold">记录成本</th>
+                <th className="px-4 py-2 text-right font-semibold">最新价</th>
+                <th className="px-4 py-2 text-right font-semibold">当前市值</th>
+                <th className="px-4 py-2 text-right font-semibold">盈亏 vs 记录</th>
               </tr>
             </thead>
             <tbody>
@@ -485,7 +489,7 @@ export default function Portfolio({
                     </div>
                     {r.currency_note && (
                       <div className="mt-0.5 text-[0.65rem] text-warn">
-                        ⚠ {r.currency_note}. The listing wins; fix the field in Records
+                        ⚠ {r.currency_note}。以挂牌货币为准；请到 记录 中修正该字段
                       </div>
                     )}
                     {/* Two different things go stale, and saying "old" flattens
@@ -497,8 +501,7 @@ export default function Portfolio({
                     )}
                     {r.closed_on && (
                       <div className="mt-0.5 text-[0.65rem] text-ink-soft">
-                        disposed of on {fmtDate(r.closed_on)}, kept here so the exit
-                        is visible
+                        已于 {fmtDate(r.closed_on)} 清仓，保留在这里以便看到退出
                       </div>
                     )}
                   </td>
@@ -511,37 +514,37 @@ export default function Portfolio({
                     {r.institution ?? (
                       <span
                         className="text-ink-faint"
-                        title="Held at no institution: no situation can photograph it and nothing can confirm it is still there. PAC targets that name no institution create these. Give the ledger row below an institution to attach it."
+                        title="不在任何机构名下：没有快照能记录它，也无法确认它是否还在。不指定机构的定投目标会产生这种行。到下方流水里给它指定机构即可。"
                       >
-                        no institution
+                        无机构
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-right text-ink-soft">{r.quantity ?? "n/a"}</td>
+                  <td className="px-4 py-2.5 text-right text-ink-soft">{r.quantity ?? "—"}</td>
                   <td
                     className="px-4 py-2.5 text-right text-ink-soft"
                     title={avgCostTitle(r)}
                   >
                     {r.avg_cost == null ? (
-                      "n/a"
+                      "—"
                     ) : r.cost_known ? (
                       <>
                         {money(data.base_currency).format(r.avg_cost)}
                         {r.cost_estimated && (
-                          <span className="ml-1 text-[0.65rem] text-warn">est.</span>
+                          <span className="ml-1 text-[0.65rem] text-warn">预估</span>
                         )}
                       </>
                     ) : (
-                      <span className="text-ink-faint">cost unknown</span>
+                      <span className="text-ink-faint">成本未知</span>
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-right text-ink">{money(data.base_currency).format(r.book_value)}</td>
                   <td
                     className="px-4 py-2.5 text-right text-ink-soft"
-                    title={r.as_of ? `Market close of ${fmtDate(r.as_of)}` : undefined}
+                    title={r.as_of ? `${fmtDate(r.as_of)} 市场收盘价` : undefined}
                   >
                     {r.live_price == null
-                      ? "unknown"
+                      ? "未知"
                       : r.currency && r.currency !== data.base_currency
                         ? `${r.live_price.toLocaleString(locale)} ${r.currency}`
                         : money(data.base_currency).format(r.live_price)}
@@ -566,7 +569,7 @@ export default function Portfolio({
                     title={
                       r.market_value != null
                         ? undefined
-                        : "Nothing can price this today: the last value recorded for this position, carried forward"
+                        : "今天无人能为它报价：此处沿用该持仓最后一次记录的价值"
                     }
                   >
                     {money(data.base_currency).format(r.market_value ?? r.observed_value)}
@@ -587,12 +590,12 @@ export default function Portfolio({
                         )}
                         {!r.cost_known && (
                           <div className="text-[0.65rem] font-normal text-ink-faint">
-                            since situation
+                            自快照以来
                           </div>
                         )}
                       </>
                     ) : (
-                      "unknown"
+                      "未知"
                     )}
                   </td>
                 </tr>
@@ -603,15 +606,7 @@ export default function Portfolio({
       )}
 
       <p className="max-w-[80ch] text-xs text-ink-faint">
-        <em>Recorded</em> is what a position cost: the purchase price where you entered one,
-        otherwise the value your last situation recorded (and then <em>Avg cost</em> says
-        "cost unknown", because that is not a price you paid). <em>Worth now</em> is the other
-        question: a market price where the market can give one, the last value recorded for
-        the position where it cannot. <em>P/L vs recorded</em> compares the two only when a real
-        quote priced the row. On a row nothing can price, the difference between the two
-        columns is there to read, but a month-old statement is not a market and this app will
-        not colour it green. Refreshing a price no longer overwrites a situation (that used to
-        force P/L to zero): to record today's values, record a new situation.
+        <em>记录成本</em>是持仓的成本：填了买入价就是买入价，否则是上次快照记录的价值（此时<em>平均成本</em>显示"成本未知"，因为那不是你付出的价格）。<em>当前市值</em>回答的是另一个问题：市场能报价就是市场价，报不了就是该持仓最后记录的价值。<em>盈亏 vs 记录</em>只在真实报价存在时才比较两者。无法报价的行，两列之差依然可读，但一个月前的对账单不是市场，本应用不会把它标成绿色。刷新价格不再覆盖快照（过去会把盈亏强行归零）：要记录今天的价值，请新建一份快照。
       </p>
     </Section>
 
@@ -692,7 +687,7 @@ function AllocationList({
             data does not have. */}
         {noData != null && noData > 0 && (
           <div className="grid grid-cols-[8rem_1fr_3.5rem] items-center gap-2 border-t border-hair pt-2 text-sm">
-            <span className="truncate text-ink-faint">No data</span>
+            <span className="truncate text-ink-faint">无数据</span>
             <div
               className="h-2 w-full rounded-full"
               style={{
@@ -725,12 +720,12 @@ function ExposureMatrix({ cells }: { cells: MatrixCell[] }) {
   return (
     <div className={cardClass + " overflow-x-auto p-4"}>
       <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-        Asset class × region (% of portfolio)
+        资产类别 × 地区（占持仓 %）
       </h4>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="text-[0.65rem] uppercase tracking-[0.1em] text-ink-soft">
-            <th className="py-1 pr-3 text-left font-medium">Class</th>
+            <th className="py-1 pr-3 text-left font-medium">类别</th>
             {regions.map((r) => (
               <th key={r} className="px-2 py-1 text-right font-medium">{r}</th>
             ))}
@@ -774,7 +769,7 @@ function LookThroughSection() {
     try {
       setData(await getPortfolioComposition(refresh));
     } catch (err) {
-      setError(apiError(err, "Could not load the composition (sources may be unreachable)."));
+      setError(apiError(err, "无法加载成分数据（数据源可能无法访问）。"));
     } finally {
       setLoading(false);
     }
@@ -786,29 +781,29 @@ function LookThroughSection() {
 
   return (
     <Section
-      title="Look-through (real exposure)"
-      note="From the issuers’ own files where they publish them, justETF and Yahoo otherwise. Cached 15 days."
+      title="穿透（真实敞口）"
+      note="有发行人官方持仓文件的取自官方文件，否则取自 justETF 和 Yahoo。缓存 15 天。"
       explain={{
-        question: "What is the look-through?",
-        text: "What is really inside your funds: countries, sectors, and the issuers you hold through more than one of them.",
+        question: "什么是穿透？",
+        text: "你的基金里真正装着什么：国家、行业，以及你通过不止一只基金持有的发行人。",
       }}
     >
       <div className="flex flex-wrap items-center gap-3">
         <button onClick={() => load(true)} disabled={loading} className={btnClass}>
-          {loading ? "Fetching…" : "↻ Update composition"}
+          {loading ? "获取中…" : "↻ 更新成分"}
         </button>
         {data && (
           <span className="text-sm text-ink-soft">
-            Coverage{" "}
+            覆盖率{" "}
             <span className="font-semibold text-ink">
               {data.coverage_pct.toFixed(1)}%
             </span>{" "}
-            of the portfolio decomposed
+            的持仓已拆解
           </span>
         )}
       </div>
       {error && <p className="text-down">{error}</p>}
-      {loading && !data && <p className="text-ink-soft">Loading composition…</p>}
+      {loading && !data && <p className="text-ink-soft">正在加载成分…</p>}
 
       {data && (
         <>
@@ -818,10 +813,10 @@ function LookThroughSection() {
           <div className={cardClass + " p-4"}>
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
               <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                How much of the portfolio we can see inside
+                持仓中能看透的部分
               </h4>
               <span className="text-sm tabular-nums text-ink">
-                {data.coverage_pct.toFixed(1)}% decomposed
+                已拆解 {data.coverage_pct.toFixed(1)}%
               </span>
             </div>
             <div className="flex h-3 w-full overflow-hidden rounded-full bg-tint">
@@ -835,8 +830,7 @@ function LookThroughSection() {
               />
             </div>
             <p className="mt-2 text-xs text-ink-faint">
-              Percentages below are shares of the whole portfolio, so they add up to the
-              decomposed part, not to 100%.
+              下方百分比均以整个持仓为分母，因此相加等于已拆解部分，而不是 100%。
             </p>
 
             {/* What the backend knows about the shape of its own answer: an
@@ -855,7 +849,7 @@ function LookThroughSection() {
             <div className="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2">
               <div>
                 <h5 className="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-olive">
-                  Looked inside
+                  已看透
                 </h5>
                 <ul className="space-y-1 text-sm">
                   {data.rows
@@ -872,13 +866,13 @@ function LookThroughSection() {
                       </li>
                     ))}
                   {data.rows.every((r) => !r.decomposed) && (
-                    <li className="text-ink-faint">Nothing yet.</li>
+                    <li className="text-ink-faint">暂无。</li>
                   )}
                 </ul>
               </div>
               <div>
                 <h5 className="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-ink-soft">
-                  Not decomposed
+                  未拆解
                 </h5>
                 <ul className="space-y-1 text-sm">
                   {data.rows
@@ -894,12 +888,11 @@ function LookThroughSection() {
                       </li>
                     ))}
                   {data.rows.every((r) => r.decomposed) && (
-                    <li className="text-ink-faint">Everything is covered.</li>
+                    <li className="text-ink-faint">全部已覆盖。</li>
                   )}
                 </ul>
                 <p className="mt-2 text-xs text-ink-faint">
-                  Single stocks and crypto have nothing inside them to look at. A fund listed
-                  here usually just needs its ISIN: add it to the holding in Records → Wealth.
+                  个股和加密货币没有内部成分可拆。列在这里的基金通常只需要补上 ISIN：到 记录 → 财富 的持仓里添加即可。
                 </p>
               </div>
             </div>
@@ -907,21 +900,21 @@ function LookThroughSection() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <AllocationList
-              title="Countries (% of portfolio)"
+              title="国家（占持仓 %）"
               items={data.countries}
               noData={data.undecomposed_pct}
             />
             <AllocationList
-              title="Sectors (% of portfolio)"
+              title="行业（占持仓 %）"
               items={data.sectors}
               noData={data.undecomposed_pct}
             />
             <AllocationList
-              title="Issuers (% of portfolio)"
+              title="发行人（占持仓 %）"
               items={data.companies ?? []}
             />
             <AllocationList
-              title="Currency exposure (% of portfolio)"
+              title="货币敞口（占持仓 %）"
               items={data.currencies ?? []}
               noData={data.undecomposed_pct}
             />
@@ -930,30 +923,26 @@ function LookThroughSection() {
           <ExposureMatrix cells={data.matrix ?? []} />
 
           <p className="text-xs text-ink-faint">
-            Currency exposure follows the country each company belongs to, not where it earns
-            its revenue, and ignores share-class hedging: a EUR-hedged fund still shows the
-            currencies of what it holds.
+            货币敞口按公司所属国家归类，而非按其收入来源地，并忽略份额对冲：欧元对冲的基金仍按其持仓显示货币。
           </p>
 
           {data.overlap.length > 0 && (
             <div className={cardClass + " p-4"}>
               <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Overlap: same stock inside 2+ funds
+                重叠：同一只股票出现在 2 只以上基金里
               </h4>
               {/* Say what this is measured on: the sources publish a top-10 per
                   fund, so a stock held by both but ranked 11th in one of them is
                   invisible here. This list is a floor, not the whole truth. */}
               <p className="mb-3 mt-1 text-xs text-ink-faint">
-                Complete for funds resolved from their issuer's own holdings file; for funds
-                covered by a third party it only sees the published top holdings, so the real
-                overlap is larger there.
+                对于从发行人官方持仓文件解析的基金，这里是完整的；第三方覆盖的基金只看得到公开的前十大持仓，因此真实重叠度更高。
               </p>
               <ul className="space-y-1.5 text-sm">
                 {data.overlap.slice(0, 10).map((o) => (
                   <li key={o.name} className="flex items-baseline justify-between gap-3">
                     <span className="text-ink">
                       {o.name}
-                      <span className="ml-2 text-xs text-ink-faint">via {o.funds.join(", ")}</span>
+                      <span className="ml-2 text-xs text-ink-faint">经 {o.funds.join("、")}</span>
                     </span>
                     <span className="tabular-nums font-medium text-ink">{o.pct.toFixed(2)}%</span>
                   </li>
@@ -986,8 +975,8 @@ const ADD_INSTITUTION = "__add__";
    what the reader is about to spend, and rounding both sides hides exactly the
    answer they came for. */
 function cashNote(p: CashPosition | undefined): string {
-  if (!p || p.anchor_date == null) return "no cash on record";
-  return `${money(p.base_currency, "cents").format(p.projected)} available`;
+  if (!p || p.anchor_date == null) return "无现金记录";
+  return `可用 ${money(p.base_currency, "cents").format(p.projected)}`;
 }
 
 function BuysSection({
@@ -1070,7 +1059,7 @@ function BuysSection({
      `.filter(Boolean)` removed the undefined — so the same row looked like it
      had a place in one view and no place at all three inches below. */
   const instName = (id: number | null) =>
-    id == null ? "no institution" : institutions.find((i) => i.id === id)?.name;
+    id == null ? "无机构" : institutions.find((i) => i.id === id)?.name;
 
   const cashFor = (id: number | null) =>
     id == null ? undefined : cash.find((c) => c.institution_id === id);
@@ -1226,7 +1215,7 @@ function BuysSection({
       setNewName("");
       setNewType("");
     } catch (err) {
-      setError(apiError(err, "Could not add it."));
+      setError(apiError(err, "添加失败。"));
     } finally {
       setCreatingInstitution(false);
     }
@@ -1252,10 +1241,10 @@ function BuysSection({
       const listed = q.currency;
       if (listed) setLearned((prev) => ({ ...prev, [q.symbol]: listed }));
       setPriceNote(
-        `${q.name ?? q.symbol}, close of ${fmtDate(q.as_of)}: ${q.price}${q.currency ? ` ${q.currency}` : ""}. Edit it if your fill differed.`,
+        `${q.name ?? q.symbol}，${fmtDate(q.as_of)} 收盘价：${q.price}${q.currency ? ` ${q.currency}` : ""}。如与你的成交价不同，请自行修改。`,
       );
     } catch (err) {
-      setError(apiError(err, "No price found for that ticker on that date."));
+      setError(apiError(err, "该代码在那天找不到价格。"));
     } finally {
       setFetchingPrice(false);
     }
@@ -1401,41 +1390,41 @@ function BuysSection({
       reset();
       await onChanged();
     } catch (err) {
-      setError(apiError(err, "Save failed."));
+      setError(apiError(err, "保存失败。"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function remove(t: Transaction) {
-    if (!window.confirm(`Delete ${t.kind} "${t.asset_name}" of ${t.date}?`)) return;
+    if (!window.confirm(`删除 ${t.date} 的${kindLabel(t.kind)}「${t.asset_name}」？`)) return;
     setError(null);
     try {
       await deleteTransaction(t.id);
       if (editId === t.id) reset();
       await onChanged();
     } catch (err) {
-      setError(apiError(err, "Delete failed."));
+      setError(apiError(err, "删除失败。"));
     }
   }
 
   return (
     <div ref={formRef}>
     <Section
-      title="Transactions (ledger)"
-      hint="What you paid, and what came back: the only place a real profit can come from."
-      note="Without a buy here, the P/L above measures movement since the last situation rather than gain. Rows marked ‘estimated’ came from market closes or gross dividends. Correct them with the real broker amounts."
+      title="交易（流水）"
+      hint="你付出了什么，收回了什么：真正的利润只能从这里来。"
+      note="这里没有买入记录的话，上面的盈亏衡量的是自上次快照以来的变动，而非收益。标记'预估'的行来自市场收盘价或税前分红，请用券商实际金额更正。"
       explain={{
-        question: "How are sells and dividends counted?",
-        text: "A sell removes units at average cost and books the difference; a dividend credits cash.",
+        question: "卖出和分红怎么记？",
+        text: "卖出按平均成本扣除份额并记入差额；分红计入现金。",
       }}
     >
       <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
         <select className={inputClass} value={kind} onChange={(e) => setKind(e.target.value)}>
-          <option value="buy">buy</option>
-          <option value="sell">sell</option>
-          <option value="dividend">dividend</option>
-          <option value="close">close</option>
+          <option value="buy">买入</option>
+          <option value="sell">卖出</option>
+          <option value="dividend">分红</option>
+          <option value="close">清仓</option>
         </select>
         <input className={inputClass} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         {/* A buy has to come from somewhere. A row with neither institution
@@ -1459,7 +1448,7 @@ function BuysSection({
           className={inputClass}
           value={institutionId}
           {...marks(needs, "institutionId")}
-          title="Where the position is held, and whose cash pays for it"
+          title="持仓放在哪家机构，以及用谁的现金支付"
           onChange={(e) => {
             if (e.target.value === ADD_INSTITUTION) {
               setAddingInstitution(true);
@@ -1472,14 +1461,14 @@ function BuysSection({
           }}
         >
           <option value="" disabled>
-            Where do you keep it?
+            你放在哪里？
           </option>
           {institutions.map((i) => (
             <option key={i.id} value={i.id}>
               {i.name} · {cashNote(cashFor(i.id))}
             </option>
           ))}
-          <option value={ADD_INSTITUTION}>+ Add where you keep it</option>
+          <option value={ADD_INSTITUTION}>+ 新增存放机构</option>
         </select>
         {/* The same picker as the situations form, with one lane added that
             matters more here than anywhere else: a ledger entry is matched to
@@ -1491,35 +1480,35 @@ function BuysSection({
           value={assetName}
           onChange={setAssetName}
           owned={owned}
-          placeholder="Asset (type to search)"
+          placeholder="资产（输入搜索）"
           mark={marks(needs, "assetName")}
           onPick={(c) => {
             setAssetName(c.name);
             if (c.source === "catalogue") {
               // No symbol to offer, and the ledger matches on symbol alone.
-              setPickNote(`${c.isin}: the ticker is still yours to give.`);
+              setPickNote(`${c.isin}：代码仍需你来填。`);
               return;
             }
             setSymbol(c.symbol);
             setPickNote(
               c.source === "owned"
                 ? null // Known-good by definition: it came off the position.
-                : `${c.symbol}: check it matches the position you are adding to.`,
+                : `${c.symbol}：请核对它与你要添加到的持仓一致。`,
             );
           }}
         />
-        <input className={inputClass + " w-32"} placeholder="Ticker or ISIN" {...marks(needs, "symbol")} title="Yahoo ticker with exchange suffix (e.g. VWCE.MI) or the fund's ISIN. It must match the position's symbol in Wealth" value={symbol} onChange={(e) => setSymbol(e.target.value)} />
-        <input ref={quantityRef} className={inputClass + " w-24"} type="number" step="any" min="0" aria-label="Quantity" placeholder="Qty" {...marks(needs, "quantity")} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+        <input className={inputClass + " w-32"} placeholder="代码或 ISIN" {...marks(needs, "symbol")} title="带交易所后缀的 Yahoo 代码（如 VWCE.MI），或基金的 ISIN。必须与 财富 中该持仓的代码一致" value={symbol} onChange={(e) => setSymbol(e.target.value)} />
+        <input ref={quantityRef} className={inputClass + " w-24"} type="number" step="any" min="0" aria-label="数量" placeholder="数量" {...marks(needs, "quantity")} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
         {!isClose && (
-          <input className={inputClass + " w-28"} type="number" step="any" min="0" aria-label={kind === "dividend" ? "Dividend per share" : "Price"} {...marks(needs, "unitPrice")} value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
+          <input className={inputClass + " w-28"} type="number" step="any" min="0" aria-label={kind === "dividend" ? "每股分红" : "价格"} {...marks(needs, "unitPrice")} value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
         )}
         {!isClose && (
           <input
             className={inputClass + " w-20"}
-            placeholder="currency"
+            placeholder="货币"
             {...marks(needs, "priceCurrency")}
             list={CURRENCY_LIST}
-            title="The currency the price is in: the listing's (USD for a New York share, GBp for pence in London)"
+            title="价格所用的货币：即挂牌货币（纽约股票为 USD，伦敦便士为 GBp）"
             value={priceCurrency}
             onChange={(e) => setPriceCurrencyChoice(e.target.value)}
           />
@@ -1531,32 +1520,32 @@ function BuysSection({
           disabled={fetchingPrice || !symbol.trim() || !date}
           className="rounded-sm border border-rule px-2 py-2 text-xs text-ink-soft transition hover:border-olive hover:text-olive disabled:opacity-50"
         >
-          {fetchingPrice ? "…" : "↻ price on date"}
+          {fetchingPrice ? "…" : "↻ 取当日价格"}
         </button>
         <input
           className={inputClass + (isClose ? " w-32" : " w-24")}
           type="number"
           step="any"
           min="0"
-          placeholder={isClose ? "Proceeds" : "Fees"}
+          placeholder={isClose ? "回款" : "费用"}
           {...marks(needs, "fees")}
           title={
             isClose
-              ? "What came back. Zero is allowed, but it has to be said: that is the difference between selling something and forgetting it."
-              : "Broker fees and commissions"
+              ? "收回了多少钱。可以为零，但必须说出来：这就是卖出和忘掉的区别。"
+              : "券商费用与佣金"
           }
           value={fees}
           onChange={(e) => setFees(e.target.value)}
         />
         <input
           className={inputClass + " w-20"}
-          placeholder="currency"
+          placeholder="货币"
           {...marks(needs, "currency")}
           list={CURRENCY_LIST}
           title={
             isClose
-              ? "The currency the proceeds reached the account in"
-              : "The currency of the account: what the fees and the money that moved are in"
+              ? "回款进入账户时的货币"
+              : "账户的货币：费用和实际划转金额所用的货币"
           }
           value={currency}
           onChange={(e) => setCurrencyChoice(e.target.value)}
@@ -1584,10 +1573,10 @@ function BuysSection({
             // which currency it wants instead.
             placeholder={
               acrossCurrencies
-                ? `${kind === "buy" ? "Debited" : "Credited"} in ${currency || "…"}`
-                : `${money(currency, "cents").format(derived)} if left blank`
+                ? `${kind === "buy" ? "支出" : "入账"} ${currency || "…"}`
+                : `留空则为 ${money(currency, "cents").format(derived)}`
             }
-            title="What the account actually moved by, from your statement. Leave it blank and it is worked out from the quantity, the price and the fees (across two currencies, at the ECB rate of the date above, where your broker's rate will differ a little)."
+            title="账户实际划转的金额，以对账单为准。留空则由数量、价格和费用算出（跨两种货币时按上方日期的 ECB 汇率折算，与你券商的汇率会略有出入）。"
             value={debit}
             onChange={(e) => setDebit(e.target.value)}
           />
@@ -1599,11 +1588,11 @@ function BuysSection({
               the form states what it is about to do, and it said the wrong
               thing for two of its four kinds. Reading `kind` also means a
               fifth one cannot inherit the wrong word. */}
-          {submitting ? "..." : editId != null ? "Save" : isClose ? "Record disposal" : `Add ${kind}`}
+          {submitting ? "..." : editId != null ? "保存" : isClose ? "记录清仓" : `添加${kindLabel(kind)}`}
         </button>
         {editId != null && (
           <button type="button" onClick={reset} className="rounded-sm px-3 py-2 text-sm text-ink-soft hover:text-ink">
-            Cancel
+            取消
           </button>
         )}
       </form>
@@ -1615,7 +1604,7 @@ function BuysSection({
           <input
             ref={newNameRef}
             className={inputClass}
-            placeholder="Name of the bank or broker"
+            placeholder="银行或券商名称"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => {
@@ -1627,7 +1616,7 @@ function BuysSection({
           />
           <input
             className={inputClass + " w-32"}
-            placeholder="Type (optional)"
+            placeholder="类型（可选）"
             value={newType}
             onChange={(e) => setNewType(e.target.value)}
           />
@@ -1637,24 +1626,23 @@ function BuysSection({
             disabled={creatingInstitution || !newName.trim()}
             onClick={() => void createAndSelect()}
           >
-            {creatingInstitution ? "..." : "Add and use"}
+            {creatingInstitution ? "..." : "添加并使用"}
           </button>
           <button
             type="button"
             onClick={() => setAddingInstitution(false)}
             className="rounded-sm px-3 py-2 text-sm text-ink-soft hover:text-ink"
           >
-            Cancel
+            取消
           </button>
           <span className="text-xs text-ink-faint">
-            It joins the list in Records → Wealth, where you can give it a cash
-            balance and its situations.
+            它会加入 记录 → 财富 的列表，你可以在那里给它设置现金余额和快照。
           </span>
         </div>
       )}
       {offered.length > 0 && (
         <div className="mt-2 rounded-sm border border-rule bg-tint p-2 text-xs text-ink-soft">
-          <p>{offerLine(symbol, instName(Number(institutionId)) ?? "this account")}</p>
+          <p>{offerLine(symbol, instName(Number(institutionId)) ?? "该账户")}</p>
           <ul className="mt-1 space-y-1">
             {offered.slice(0, SHOWN).map((t) => (
               <li key={t.id} className="flex flex-wrap items-center gap-2">
@@ -1666,7 +1654,7 @@ function BuysSection({
                   onClick={() => correctInstead(t)}
                   className="rounded-sm border border-rule px-2 py-1 text-xs text-ink-soft transition hover:border-olive hover:text-olive"
                 >
-                  Correct this one
+                  改记这一笔
                 </button>
               </li>
             ))}
@@ -1681,31 +1669,29 @@ function BuysSection({
           not a verdict on the entry. */}
       {overspend && (
         <p className="mt-2 text-xs text-warn">
-          That is more than the {money(overspend.base_currency, "cents").format(overspend.projected)} on record at{" "}
-          {overspend.institution_name}. It was recorded anyway. If the balance is
-          simply behind, its cash anchor in Records → Wealth is where you say so.
+          超过了 {overspend.institution_name} 记录的 {money(overspend.base_currency, "cents").format(overspend.projected)}。仍然已记账。如果余额只是没跟上，请到 记录 → 财富 里更新它的现金锚点。
         </p>
       )}
       {pickNote && <p className="mb-2 text-xs text-olive">{pickNote}</p>}
       {error && <p className="text-down">{error}</p>}
       {priceNote && <p className="text-xs text-up">{priceNote}</p>}
-      <RowsOrEmpty loading={false} error={null} empty={items.length === 0} emptyText="No transactions yet. Add one, or let PACs and dividends auto-record at app start.">
+      <RowsOrEmpty loading={false} error={null} empty={items.length === 0} emptyText="还没有交易。手动添加一笔，或让定投和分红在启动时自动记账。">
         {items.map((t) => (
           <Row
             key={t.id}
             onEdit={() => startEdit(t)}
             onDelete={() => remove(t)}
             title={t.asset_name}
-            badge={[t.plan_id != null ? "PAC" : t.kind, t.estimated ? "est." : null]
+            badge={[t.plan_id != null ? "PAC" : kindLabel(t.kind), t.estimated ? "预估" : null]
               .filter(Boolean)
               .join(" · ")}
             subtitle={[
               fmtDate(t.date),
               t.price_currency ? `${t.quantity} × ${money(t.price_currency).format(t.unit_price)}` : null,
-              t.fees ? `fees ${money(t.currency).format(t.fees)}` : null,
+              t.fees ? `费用 ${money(t.currency).format(t.fees)}` : null,
               // A sum fixed at one day's rate says which day, so it can be held
               // against the statement.
-              t.fx_as_of ? `at the ECB rate of ${fmtDate(t.fx_as_of)}` : null,
+              t.fx_as_of ? `按 ${fmtDate(t.fx_as_of)} 的 ECB 汇率` : null,
               instName(t.institution_id),
               t.symbol,
             ]

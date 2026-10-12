@@ -31,10 +31,10 @@ import { RowsOrEmpty, Spinner, apiError, cardClass, locale, mdComponents } from 
    the other kind of "before" already lives. */
 
 const ROLE_LABEL: Record<string, string> = {
-  analyst: "Analyst · sees only the numbers",
-  confidant: "Knows you · has not seen the numbers",
-  revision: "Analyst · answers the challenge",
-  synthesis: "The answer",
+  analyst: "分析师 · 只看数字",
+  confidant: "知己 · 没看过数字",
+  revision: "分析师 · 回应质疑",
+  synthesis: "最终结论",
 };
 
 /* What each run's `challenge` says, in the reader's words rather than the
@@ -45,21 +45,21 @@ const ROLE_LABEL: Record<string, string> = {
    precisely what the count below is watching for. */
 const CHALLENGE: Record<string, { label: string; tone: string; title: string }> = {
   contested: {
-    label: "contested",
+    label: "有质疑",
     tone: "text-olive",
     title:
-      "The confidant said it was challenging something that mattered, so the analyst was made to answer it",
+      "知己认为挑战了要紧的地方，于是分析师被要求回应",
   },
   fits: {
-    label: "not contested",
+    label: "无质疑",
     tone: "text-ink-faint",
-    title: "The confidant read the findings and said they fit this person",
+    title: "知己读过结论后认为它符合这个人",
   },
   unstated: {
-    label: "no verdict",
+    label: "无结论",
     tone: "text-warn",
     title:
-      "That run ended on no verdict line, so it says nothing either way and is counted neither way",
+      "那一轮结束时没有结论行，等于什么都没说，两边都不计数",
   },
 };
 
@@ -80,7 +80,7 @@ function StepBlock({ step }: { step: ChainStep }) {
         <span className="font-display text-lg leading-tight text-ink">{step.title}</span>
         <span className="ml-auto shrink-0 text-xs text-ink-faint">
           {step.model}
-          {step.duration_ms != null && ` · ${(step.duration_ms / 1000).toFixed(1)}s`}
+          {step.duration_ms != null && ` · ${(step.duration_ms / 1000).toFixed(1)} 秒`}
           <span className="ml-2 text-ink-soft">{open ? "−" : "+"}</span>
         </span>
       </button>
@@ -103,7 +103,7 @@ function measured(run: ChainRun): string[] {
   const out: string[] = [];
   const times = run.steps.filter((s) => s.duration_ms != null);
   if (times.length > 0) {
-    out.push(`${Math.round(times.reduce((a, s) => a + (s.duration_ms ?? 0), 0) / 1000)}s`);
+    out.push(`${Math.round(times.reduce((a, s) => a + (s.duration_ms ?? 0), 0) / 1000)} 秒`);
   }
   if (run.steps.length > 0 && run.steps.every((s) => s.cost != null)) {
     out.push(`$${run.steps.reduce((a, s) => a + (s.cost ?? 0), 0).toFixed(4)}`);
@@ -127,11 +127,11 @@ function Header({
   return (
     <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
       <button onClick={onClose} className="text-sm text-olive underline-offset-2 hover:underline">
-        ‹ Back
+        ‹ 返回
       </button>
       {onList && (
         <button onClick={onList} className="text-sm text-olive underline-offset-2 hover:underline">
-          All analyses
+          全部分析
         </button>
       )}
       <h2 className="font-display text-2xl leading-none text-ink">{title}</h2>
@@ -162,7 +162,7 @@ function RunList({ onOpen, onClose }: { onOpen: (id: number) => void; onClose: (
   useEffect(() => {
     listChainRuns()
       .then(setRuns)
-      .catch((e) => setError(apiError(e, "The analyses could not be listed.")));
+      .catch((e) => setError(apiError(e, "无法列出分析记录。")));
   }, []);
 
   const shown = runs ?? [];
@@ -172,29 +172,22 @@ function RunList({ onOpen, onClose }: { onOpen: (id: number) => void; onClose: (
 
   return (
     <div className="space-y-6">
-      <Header title="Past analyses" onClose={onClose} />
+      <Header title="过往分析" onClose={onClose} />
 
       {shown.length > 0 && (
         <div className={cardClass + " space-y-2 p-4"}>
           <p className="text-sm text-ink">
-            Over the last {shown.length} {shown.length === 1 ? "analysis" : "analyses"}, the
-            colleague who knows you <span className="font-semibold">contested {pressed}</span> and
-            let {fits} through
+            最近 {shown.length} 次分析中，了解你的那位同事
+            <span className="font-semibold">质疑了 {pressed} 次</span>，放过了 {fits} 次
             {unstated > 0 && (
               <>
-                {" "}
-                ({unstated} ended on no verdict line and {unstated === 1 ? "is" : "are"} counted
-                neither way)
+                （{unstated} 次结束时没有结论行，两边都不计数）
               </>
             )}
-            .
+            。
           </p>
           <p className="text-xs text-ink-faint">
-            The chain is worth its wait only if that challenge bites, so this counts how often it
-            said it did (the confidant&rsquo;s own word for each run, not a reading of its tone). A
-            mandate that has gone soft shows up here as a column that never contests. Nothing acts
-            on the number: a mandate that tightened itself would be a prompt that changed without
-            anyone deciding to change it.
+            这条链只有在质疑真咬得住时才值它的等待，所以这里统计它自称咬住的次数（每轮用知己自己的说法，不是对语气的解读）。已经变松的指令会在这里表现为一列从不质疑的记录。这个数字不触发任何动作：一个自己收紧的指令，等于有人没决定改就改了提示词。
           </p>
         </div>
       )}
@@ -203,7 +196,7 @@ function RunList({ onOpen, onClose }: { onOpen: (id: number) => void; onClose: (
         loading={runs === null && error === null}
         error={error}
         empty={shown.length === 0}
-        emptyText="Nothing has been analysed yet. Ask the chat for an analysis: it says what the wait and the few cents buy before anything starts."
+        emptyText="还没有分析过任何东西。向对话助手请求一次分析：开始前它会先说清这段等待和几毛钱买到了什么。"
       >
         {shown.map((r) => {
           const c = CHALLENGE[r.challenge] ?? CHALLENGE.unstated;
@@ -216,9 +209,9 @@ function RunList({ onOpen, onClose }: { onOpen: (id: number) => void; onClose: (
               >
                 <span className="text-ink">{new Date(r.created_at).toLocaleString(locale)}</span>
                 <span className="text-xs text-ink-faint">
-                  {r.step_count} steps
+                  {r.step_count} 步
                   {r.revisions > 0 &&
-                    ` · the analyst answered ${r.revisions} time${r.revisions > 1 ? "s" : ""}`}
+                    ` · 分析师回应了 ${r.revisions} 次`}
                 </span>
                 <span className={"ml-auto shrink-0 text-xs " + c.tone} title={c.title}>
                   {c.label}
@@ -252,7 +245,7 @@ function OneRun({
     setError(null);
     getChainRun(runId)
       .then(setRun)
-      .catch((e) => setError(apiError(e, "That analysis could not be loaded.")));
+      .catch((e) => setError(apiError(e, "无法加载那次分析。")));
   }, [runId]);
 
   const verdict = run?.steps.find((s) => s.role === "synthesis");
@@ -261,13 +254,13 @@ function OneRun({
 
   return (
     <div className="space-y-6">
-      <Header title="The analysis" onList={onList} onClose={onClose}>
+      <Header title="分析报告" onList={onList} onClose={onClose}>
         {run && (
           <span className="text-xs text-ink-faint">
-            {new Date(run.created_at).toLocaleString(locale)} · {run.steps.length} steps
+            {new Date(run.created_at).toLocaleString(locale)} · {run.steps.length} 步
             {rounds > 0
-              ? ` · the analyst answered the challenge ${rounds} time${rounds > 1 ? "s" : ""}`
-              : " · the challenge was not contested"}
+              ? ` · 分析师回应质疑 ${rounds} 次`
+              : " · 质疑未被触发"}
             {measured(run).length > 0 && ` · ${measured(run).join(" · ")}`}
           </span>
         )}
@@ -279,7 +272,7 @@ function OneRun({
       {run && verdict && (
         <div className={cardClass + " p-6"}>
           <p className="mb-3 text-[0.65rem] font-medium uppercase tracking-[0.14em] text-olive">
-            What this means for you
+            这对你意味着什么
           </p>
           <div className="max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
@@ -295,7 +288,7 @@ function OneRun({
               analyst held its ground and where it gave way — which only exists
               in the record because the revision step is required to label every
               point REVISE or HOLD. */}
-          <p className="text-sm text-ink-soft">How it got there</p>
+          <p className="text-sm text-ink-soft">推演过程</p>
           <ol className="space-y-5">
             {earlier.map((s) => (
               <StepBlock key={s.step_no} step={s} />

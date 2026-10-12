@@ -102,8 +102,8 @@ export function DatedAmountEditor<T extends { id: number; note: string | null },
     create,
     update,
     destroy,
-    confirmDelete: (i) => `Delete the ${noun} of ${dateOf(i)}?`,
-    saveError: `Save failed (a ${noun} for that date may already exist).`,
+    confirmDelete: (i) => `删除 ${dateOf(i)} 的${noun}？`,
+    saveError: `保存失败（该日期的${noun}可能已存在）。`,
     onChanged,
   });
 
@@ -133,7 +133,7 @@ export function DatedAmountEditor<T extends { id: number; note: string | null },
           // it, so the box had no name: measured, the anchor's date on the
           // account page read as '' in the accessibility tree. Named with the
           // same word a sighted reader sees, or "Date" where there is none.
-          aria-label={dateLabel ?? "Date"}
+          aria-label={dateLabel ?? "日期"}
           {...marks(needs, "date")}
           value={ed.draft.date}
           onChange={(e) => ed.set("date")(e.target.value)}
@@ -150,9 +150,9 @@ export function DatedAmountEditor<T extends { id: number; note: string | null },
         {proposedCurrency && (
           <input
             className={inputClass + " w-20"}
-            placeholder="currency"
+            placeholder="货币"
             list={CURRENCY_LIST}
-            title="The currency this amount is in. Proposed from the anchor in force on this date; change it and it stays as you typed it."
+            title="这笔金额所用的货币。默认按该日期生效的锚点给出；改成别的就按你输入的保留。"
             value={ed.draft.currency || proposedCurrency(ed.draft.date)}
             onChange={(e) => ed.set("currency")(e.target.value)}
           />

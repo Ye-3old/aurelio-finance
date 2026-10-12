@@ -39,19 +39,19 @@ test("every holding is shown in exactly one bucket, and the subtotals add up to 
 });
 
 test("Stocks & ETF shows fund_etf beside equity — every PAC purchase is fund_etf", () => {
-  assert.equal(bucketOf("fund_etf").label, "Stocks & ETF");
-  assert.equal(bucketOf("equity").label, "Stocks & ETF");
+  assert.equal(bucketOf("fund_etf").label, "股票与 ETF");
+  assert.equal(bucketOf("equity").label, "股票与 ETF");
 });
 
 test("a class no bucket names is shown in Other, never nowhere", () => {
   for (const cls of ["cash", "real_estate", null, undefined, "a_class_from_next_year"]) {
-    assert.equal(bucketOf(cls).label, "Other", String(cls));
+    assert.equal(bucketOf(cls).label, "其他", String(cls));
   }
 });
 
 test("a new holding takes its bucket's class; an edited one keeps its own", () => {
-  const stocks = BUCKETS.find((b) => b.label === "Stocks & ETF")!;
-  const other = BUCKETS.find((b) => b.label === "Other")!;
+  const stocks = BUCKETS.find((b) => b.label === "股票与 ETF")!;
+  const other = BUCKETS.find((b) => b.label === "其他")!;
   assert.equal(classOnSave(stocks, null), "equity");
   assert.equal(classOnSave(stocks, { asset_class: "fund_etf" }), "fund_etf");
   assert.equal(classOnSave(other, { asset_class: "cash" }), "cash");

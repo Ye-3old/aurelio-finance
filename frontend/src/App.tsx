@@ -23,28 +23,28 @@ import type { Focus } from "./nav";
 // read the overview, read the investments, enter records, describe yourself.
 //
 // Asking the models was the fifth, and it is not a tab any more. The analyzer
-// is something you ASK FOR — a card in the chat that says what a minute and a
-// few cents buy, confirmed, then watched step by step — and a tab called
+// is something you ASK FOR  a card in the chat that says what a minute and a
+// few cents buy, confirmed, then watched step by step  and a tab called
 // Analyzer with nothing on it but a button was the page that made the wait
 // silent. What the page WAS for survives: a verdict is a document, so reading
 // one still happens here in the main column, opened from the card that
 // produced it. See `reading` below.
 const TABS = [
-  { key: "dashboard", label: "Dashboard", wide: true },
-  { key: "portfolio", label: "Portfolio", wide: true },
-  { key: "records", label: "Records", wide: true },
-  { key: "profile", label: "Profile", wide: false },
+  { key: "dashboard", label: "总览", wide: true },
+  { key: "portfolio", label: "持仓", wide: true },
+  { key: "records", label: "记录", wide: true },
+  { key: "profile", label: "档案", wide: false },
 ] as const;
 
-// Two measures, not one. 1024px is a READING measure — it exists to hold a line
-// under about 75 characters — but a table is not read, it is scanned, and at
+// Two measures, not one. 1024px is a READING measure  it exists to hold a line
+// under about 75 characters  but a table is not read, it is scanned, and at
 // that width the Portfolio's eight columns get roughly 120px each, inside which
 // "P/L vs recorded" has to fit two numbers and a note. Data views get 1280;
 // prose stays at 1024, because the models' reports ARE prose and widening them
 // makes them more tiring, not less.
 //
 // Neither fills the screen. Past ~1600px a cell drifts so far from its heading
-// that the eye loses the row — the opposite defect, and the worse one.
+// that the eye loses the row  the opposite defect, and the worse one.
 const READING = "max-w-5xl";
 const SCANNING = "max-w-7xl";
 
@@ -78,7 +78,7 @@ function TabButton({
 }
 
 // The rail: a narrow column on the far left that is always there, and IS the
-// button — the whole strip opens and closes the chat, not a glyph inside it.
+// button  the whole strip opens and closes the chat, not a glyph inside it.
 // It has to be read as the chat before it is pressed, so it carries a tinted
 // ground, the speech bubble, and its name spelled out down its length; the
 // panel slides out from behind it, so the control sits where the thing it
@@ -87,9 +87,9 @@ function ChatRail({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   return (
     <button
       onClick={onToggle}
-      aria-label={open ? "Close the chat" : "Open the chat"}
+      aria-label={open ? "关闭对话" : "打开对话"}
       aria-pressed={open}
-      title={open ? "Close the chat" : "Ask Aurelio about your finances"}
+      title={open ? "关闭对话" : "向 Aurelio 咨询你的财务"}
       className={
         "relative sticky top-0 z-10 flex h-screen w-14 shrink-0 items-center justify-center border-r transition " +
         (open
@@ -132,7 +132,7 @@ function ChatRail({ open, onToggle }: { open: boolean; onToggle: () => void }) {
         aria-hidden="true"
         className="font-display text-xl leading-none tracking-wide [writing-mode:vertical-rl] rotate-180"
       >
-        {open ? "Close the chat" : "Ask Aurelio"}
+        {open ? "关闭对话" : "问 Aurelio"}
       </span>
     </button>
   );
@@ -153,8 +153,8 @@ function PacBanner({
   const buys = result.created.filter((t) => t.kind === "buy").length;
   const divs = result.created.filter((t) => t.kind === "dividend").length;
   const parts = [
-    buys > 0 ? `${buys} PAC purchase${buys > 1 ? "s" : ""}` : null,
-    divs > 0 ? `${divs} dividend${divs > 1 ? "s" : ""}` : null,
+    buys > 0 ? `${buys} 笔定投买入` : null,
+    divs > 0 ? `${divs} 笔分红` : null,
   ].filter(Boolean);
   return (
     <div className="border-b border-olive-tint bg-olive-tint">
@@ -166,24 +166,24 @@ function PacBanner({
       >
         {parts.length > 0 && (
           <span>
-            <span className="font-semibold">{parts.join(" and ")}</span> recorded automatically
-            (marked <em>estimated</em>: correct them with the real amounts if they differ).{" "}
+            已自动记账：<span className="font-semibold">{parts.join("、")}</span>
+            （标记为<em>预估</em>，如与实际金额不符请改正）。{" "}
             {divs > 0 && <>{dividendsNote(divs)} </>}
             <button onClick={onOpenPortfolio} className="font-medium underline">
-              Review in Portfolio
+              去持仓中核对
             </button>
           </span>
         )}
         {result.skipped.length > 0 && (
           <span className="text-olive-deep">
-            {result.skipped.length} occurrence{result.skipped.length > 1 ? "s" : ""} skipped
-            ({result.skipped[0].reason}
-            {result.skipped.length > 1 ? ", …" : ""}). Will retry at next start.
+            跳过了 {result.skipped.length} 笔
+            （{result.skipped[0].reason}
+            {result.skipped.length > 1 ? "，…" : ""}），下次启动时会重试。
           </span>
         )}
         <button
           onClick={onDismiss}
-          aria-label="Dismiss"
+          aria-label="关闭"
           className="ml-auto px-2 text-olive hover:text-olive-deep"
         >
           ✕
@@ -205,8 +205,8 @@ export default function App() {
   const [quoted, setQuoted] = useState<string[]>([]);
   // The chat panel: state ABOVE the tabs, because a conversation that forgot
   // itself when you went to look at the table it was talking about would be a
-  // tab in disguise. It stays as you left it when you navigate — open follows
-  // you, closed frees the page — and the panel keeps its own history.
+  // tab in disguise. It stays as you left it when you navigate  open follows
+  // you, closed frees the page  and the panel keeps its own history.
   //
   // And it knows where you are: every question is sent with `page`, below,
   // which is the other half of moving around with the chat open. Its context
@@ -220,7 +220,7 @@ export default function App() {
   // the tabs stay where they are so leaving is the same gesture it always was.
   //
   // "list" exists because a receipt is a poor last resort. A run outlives the
-  // conversation that ordered it — deleting the chat deletes no record — so
+  // conversation that ordered it  deleting the chat deletes no record  so
   // there has to be a way to the runs that does not depend on a card still
   // being on screen. It is reached from the panel's history, beside the other
   // kind of "before".
@@ -229,7 +229,7 @@ export default function App() {
   // Which page of Records is open, and which section a link asked us to scroll
   // to when we get there. Both live up here for the same reason: the account
   // page prints a sentence about six quantities and is the sole home of one of
-  // them, so the other five have to be able to say where they are kept — and
+  // them, so the other five have to be able to say where they are kept  and
   // "Records → Cash flow, at Income" is two facts, one of which used to be
   // locked inside Records.
   const [recordsPage, setRecordsPage] = useState<RecordsPage>("wealth");
@@ -237,7 +237,7 @@ export default function App() {
 
   // Which account and which situation Wealth has open. Up here and not inside
   // Wealth, where they used to be, because a question can be about exactly
-  // them — "why is this so low?" on an account's page is about that account — and a
+  // them  "why is this so low?" on an account's page is about that account  and a
   // page App cannot see is a page the chat cannot be told about.
   const [account, setAccount] = useState<Institution | null>(null);
   const [situation, setSituation] = useState<Snapshot | null>(null);
@@ -269,7 +269,7 @@ export default function App() {
   // itself. It does NOT filter what it lands on: every one of these lists
   // already prints the institution on every row, so the reader who came from
   // an account can see which rows are its own without the page hiding the rest
-  // — and a filter left switched on would quietly hide the eleventh expense
+  //  and a filter left switched on would quietly hide the eleventh expense
   // from someone entering ten in a row, which is the workflow the account page
   // exists alongside rather than replaces.
   function go(f: Focus) {
@@ -298,7 +298,7 @@ export default function App() {
     (reading === null && TABS.find((t) => t.key === tab)?.wide ? SCANNING : READING);
 
   // Ledger catch-up at app start: elapsed PAC occurrences become Buys, and
-  // dividend ex-dates of dist positions become dividend entries (idempotent —
+  // dividend ex-dates of dist positions become dividend entries (idempotent 
   // nothing happens twice). No timer needed: dates are reconstructed
   // retroactively even after months away.
   // What the feed quotes, for the suggestion list on every currency box. A
@@ -339,7 +339,7 @@ export default function App() {
     <div className="flex min-h-screen bg-ground text-ink">
       {/* Suggestions, not a choice. A closed dropdown of the feed's codes would
           answer the matching question and refuse a real holding: the ECB does
-          not quote TWD, and a Taipei-listed fund is an ordinary thing to own —
+          not quote TWD, and a Taipei-listed fund is an ordinary thing to own 
           nor GBp, which London genuinely quotes in pence. So the boxes stay
           typeable, the shape is checked on the way in (`StatedCurrency`), and
           an amount nobody can convert is named beside the total it entered
@@ -431,8 +431,8 @@ export default function App() {
                   onDebt={setDebt}
                 />
               )}
-              {/* Profile and Goals are two halves of one answer — who you are,
-                  and what you want measurably — so they share a page. */}
+              {/* Profile and Goals are two halves of one answer  who you are,
+                  and what you want measurably  so they share a page. */}
               {tab === "profile" && (
                 <div className="space-y-12">
                   <Profile />

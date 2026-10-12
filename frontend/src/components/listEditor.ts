@@ -3,7 +3,7 @@ import { refusal, type Need } from "./required";
 import { apiError } from "./ui";
 
 /* The controller behind "a list of things, with a form above it that both adds
-   and edits" — the shape this app is built out of, written thirteen times.
+   and edits"  the shape this app is built out of, written thirteen times.
 
    What repeated was never the markup. The forms genuinely differ: a balance
    takes a date and a number, a plan takes a name, a frequency, a source and a
@@ -13,7 +13,7 @@ import { apiError } from "./ui";
      - one `editId` that turns the SAME form from "add" into "save", instead of
        a second form somewhere else that drifts from the first;
      - a draft cleared on cancel, on save, and on deleting the row being edited
-       — that last one is the case a copy forgets, and it leaves the form
+        that last one is the case a copy forgets, and it leaves the form
        claiming to edit a row that no longer exists;
      - create-or-update chosen from `editId`, never from which button was
        clicked;
@@ -29,7 +29,7 @@ import { apiError } from "./ui";
 export type Draft = Record<string, string>;
 
 export function useListEditor<T extends { id: number }, P>(opts: {
-  /** The empty form — what "add" starts from, and what Cancel returns to. */
+  /** The empty form  what "add" starts from, and what Cancel returns to. */
   blank: Draft;
   /** How an existing row fills the form for editing. */
   toDraft: (item: T) => Draft;
@@ -47,7 +47,7 @@ export function useListEditor<T extends { id: number }, P>(opts: {
   confirmDelete?: (item: T) => string;
   /** Reload whatever this list came from. */
   onChanged: () => Promise<void> | void;
-  /** Said only when the backend says nothing usable — see `apiError`. */
+  /** Said only when the backend says nothing usable  see `apiError`. */
   saveError?: string;
   deleteError?: string;
 }) {
@@ -87,7 +87,7 @@ export function useListEditor<T extends { id: number }, P>(opts: {
       reset();
       await opts.onChanged();
     } catch (err) {
-      setError(apiError(err, opts.saveError ?? "Save failed."));
+      setError(apiError(err, opts.saveError ?? "保存失败。"));
     } finally {
       setSubmitting(false);
     }
@@ -104,7 +104,7 @@ export function useListEditor<T extends { id: number }, P>(opts: {
       if (editId === item.id) reset();
       await opts.onChanged();
     } catch (err) {
-      setError(apiError(err, opts.deleteError ?? "Delete failed."));
+      setError(apiError(err, opts.deleteError ?? "删除失败。"));
     }
   }
 

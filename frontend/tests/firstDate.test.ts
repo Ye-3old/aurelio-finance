@@ -72,16 +72,16 @@ test("a new plan from 2025-09-16 writes 13 buys, and is offered 2026-10-16", () 
   assert.equal(p.next, "2026-10-16");
 
   const w = pastBuysWarning(p, "2025-09-16");
-  assert.equal(w.lead, "2025-09-16 is in the past.");
+  assert.equal(w.lead, "2025-09-16 在过去。");
   assert.equal(
     w.body,
-    "Saved like this, the app writes 13 buys into your records, dated from 2025-09-16 to 2026-09-16, priced at Yahoo's close rather than at your broker's fills, and marked estimated.",
+    "这样保存，应用会写入 13 笔买入记录，日期从 2025-09-16 到 2026-09-16，按 Yahoo 收盘价而非券商实际成交价计，并标记为预估。",
   );
   assert.equal(
     w.alternative,
-    "Already running at your broker? Then let everything up to today be the broker's: start the plan on its next date, and enter today's units and cash from its statement on the account's page.",
+    "券商那边已经在投了？那就把到今天为止的都算作券商的：从下一个日期启动计划，并在账户页按对账单录入今天的份额和现金。",
   );
-  assert.equal(w.button, "Start on 2026-10-16");
+  assert.equal(w.button, "从 2026-10-16 启动");
 });
 
 test("the one press leaves nothing in the past", () => {
@@ -90,7 +90,7 @@ test("the one press leaves nothing in the past", () => {
   assert.equal(pastBuys(monthly(p.next), null, TODAY), null);
   assert.equal(
     startsLine(p.next),
-    "Starts 2026-10-16. Once it is saved, enter today's units and cash from the broker's statement on the account's page.",
+    "2026-10-16 启动。保存后，请到账户页按券商对账单录入今天的份额和现金。",
   );
 });
 
@@ -106,7 +106,7 @@ test("one past date is said in the singular", () => {
   assert.deepEqual(p.dates, ["2026-09-20"]);
   assert.equal(
     pastBuysWarning(p, "2026-09-20").body,
-    "Saved like this, the app writes a buy into your records, dated 2026-09-20, priced at Yahoo's close rather than at your broker's fills, and marked estimated.",
+    "这样保存，应用会写入一笔买入记录，日期 2026-09-20，按 Yahoo 收盘价而非券商实际成交价计，并标记为预估。",
   );
 });
 
@@ -135,7 +135,7 @@ test("a running plan moved earlier is told the months it adds, and offered nothi
   assert.equal(p.hasRun, true);
   assert.equal(p.next, null);
   const w = pastBuysWarning(p, "2026-08-04");
-  assert.equal(w.lead, "This change adds dates before today.");
+  assert.equal(w.lead, "这次修改会新增今天之前的日期。");
   assert.equal(w.button, null);
 });
 
@@ -147,7 +147,7 @@ test("a frequency switched on a running plan is told the months it adds", () => 
   assert.deepEqual(p.dates, ["2026-02-15", "2026-03-15", "2026-05-15", "2026-06-15", "2026-08-15", "2026-09-15"]);
   assert.equal(
     pastBuysWarning(p, "2026-01-15").body,
-    "Saved like this, the app writes 6 buys into your records, dated from 2026-02-15 to 2026-09-15, priced at Yahoo's close rather than at your broker's fills, and marked estimated.",
+    "这样保存，应用会写入 6 笔买入记录，日期从 2026-02-15 到 2026-09-15，按 Yahoo 收盘价而非券商实际成交价计，并标记为预估。",
   );
 });
 
@@ -161,19 +161,19 @@ test("a plan stored to start later and moved into the past is offered its next d
 test("after the save, the line names the plan and its first buy", () => {
   assert.equal(
     afterSaveLine("PAC All-World", "2026-10-16"),
-    "PAC All-World starts on 2026-10-16. Record today's situation and cash balance from the broker's statement (start the situation from the last one, so the other positions stay):",
+    "PAC All-World 将从 2026-10-16 启动。请按券商对账单录入今天的快照和现金余额（快照从上一份复制起步，其他持仓才会保留）：",
   );
 });
 
 test("a flow's date is its first payment, or the day a one-off happens", () => {
-  assert.equal(flowDateLabel("monthly"), "first payment");
-  assert.equal(flowDateLabel(""), "first payment");
-  assert.equal(flowDateLabel("annual"), "first payment");
-  assert.equal(flowDateLabel("one_off"), "on");
-  assert.equal(PLAN_DATE_LABEL, "first buy");
+  assert.equal(flowDateLabel("monthly"), "首次扣款");
+  assert.equal(flowDateLabel(""), "首次扣款");
+  assert.equal(flowDateLabel("annual"), "首次扣款");
+  assert.equal(flowDateLabel("one_off"), "发生于");
+  assert.equal(PLAN_DATE_LABEL, "首次买入");
   assert.equal(
     FIRST_PAYMENT_NOTE,
-    "The first payment's day is the day it repeats on. A past date is safe: payments before the account's latest balance are already in it.",
+    "首次扣款的那一天就是以后每次重复的日子。填过去的日期是安全的：账户最近一次余额之前的扣款已经包含在余额里了。",
   );
 });
 

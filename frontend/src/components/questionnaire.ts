@@ -37,11 +37,11 @@ export function unshownAnswer(q: SurveyQuestion, value: string): string | null {
   if (canShow(q, value)) return null;
   const replace =
     q.type === "boolean"
-      ? "which is none of these answers. Press one"
+      ? "不在这些答案里。点一个"
       : q.type === "single"
-        ? "which is none of these options. Pick one"
-        : "which is not a number. Type one";
-  return `On record: "${value}", ${replace} to replace it; saved without one, it stays as it is.`;
+        ? "不在这些选项里。选一个"
+        : "不是一个数字。输一个";
+  return `已记录：「${value}」，${replace}来替换它；不选就保存的话，它会原样保留。`;
 }
 
 /** Whether `q` is shown, given the answers so far: a question that follows

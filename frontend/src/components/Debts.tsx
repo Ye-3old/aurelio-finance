@@ -33,9 +33,19 @@ import { BALANCE, DEBT, marks, refusal } from "./required";
 
 const KINDS = ["", "mortgage", "personal_loan", "auto_loan", "student_loan", "credit_card", "other"];
 
-// "personal_loan" -> "personal loan"
+// "personal_loan" -> "personal loan". Display only: the stored `kind` stays
+// the enum the API speaks.
+const KIND_LABEL: Record<string, string> = {
+  mortgage: "房贷",
+  personal_loan: "个人贷款",
+  auto_loan: "车贷",
+  student_loan: "学贷",
+  credit_card: "信用卡",
+  other: "其他",
+};
+
 function prettyKind(s: string | null): string | null {
-  return s ? s.replace(/_/g, " ") : s;
+  return s ? (KIND_LABEL[s] ?? s.replace(/_/g, " ")) : s;
 }
 
 /* Which debt is open is App's state, so the chat can be told which one "this"
@@ -53,7 +63,7 @@ export default function Debts({
   if (!checked) return null;
 
   const crumbs: Crumb[] = [
-    { label: "Debts", active: !liability, onClick: () => onLiability(null) },
+    { label: "负债", active: !liability, onClick: () => onLiability(null) },
   ];
   if (liability) crumbs.push({ label: liability.name, active: true, onClick: () => {} });
 
@@ -104,7 +114,7 @@ function DebtsLevel({ onSelect }: { onSelect: (l: Liability) => void }) {
       setAssets(ras);
       setBase(b.base_currency);
     } catch (err) {
-      setError(apiError(err, "Could not reach the backend. Is it running on :8000?"));
+      setError(apiError(err, "无法连接后端，后端是否在 :8000 上运行？"));
     } finally {
       setLoading(false);
     }
@@ -150,21 +160,21 @@ function DebtsLevel({ onSelect }: { onSelect: (l: Liability) => void }) {
       reset();
       await load();
     } catch (err) {
-      setFormError(apiError(err, "Save failed."));
+      setFormError(apiError(err, "保存失败。"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function remove(l: Liability) {
-    if (!window.confirm(`Delete "${l.name}"? This also removes its balance history.`)) return;
+    if (!window.confirm(`删除「${l.name}」？这会同时删掉它的余额历史。`)) return;
     setError(null);
     try {
       await deleteLiability(l.id);
       if (editId === l.id) reset();
       await load();
     } catch (err) {
-      setError(apiError(err, "Delete failed."));
+      setError(apiError(err, "删除失败。"));
     }
   }
 
@@ -176,40 +186,40 @@ function DebtsLevel({ onSelect }: { onSelect: (l: Liability) => void }) {
   function debtSubtitle(l: Liability): string | undefined {
     const parts: string[] = [];
     const linked = assetName(l.real_asset_id);
-    if (linked) parts.push(`finances ${linked}`);
-    if (l.interest_rate != null) parts.push(`${l.interest_rate}%/yr`);
+    if (linked) parts.push(`为 ${linked} 融资`);
+    if (l.interest_rate != null) parts.push(`${l.interest_rate}%/年`);
     return parts.length ? parts.join(" · ") : undefined;
   }
 
   return (
     <Section
-      title="Debts"
-      hint="Mortgage, loans… Net worth subtracts the latest balance of each. Link a mortgage to its asset to see your equity."
+      title="负债"
+      hint="房贷、贷款……净资产会减去每笔负债的最新余额。把房贷关联到它的资产，就能看到你的净资产（权益）。"
     >
       <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
-        <input className={inputClass} aria-label="Name" {...marks(DEBT, "name")} value={name} onChange={(e) => setName(e.target.value)} />
+        <input className={inputClass} aria-label="名称" {...marks(DEBT, "name")} value={name} onChange={(e) => setName(e.target.value)} />
         <select className={inputClass} value={kind} onChange={(e) => setKind(e.target.value)}>
-          {KINDS.map((k) => (<option key={k} value={k}>{prettyKind(k) || "kind…"}</option>))}
+          {KINDS.map((k) => (<option key={k} value={k}>{prettyKind(k) || "类型…"}</option>))}
         </select>
-        <input className={inputClass + " w-28"} type="number" step="0.01" placeholder="Rate %/yr" value={rate} onChange={(e) => setRate(e.target.value)} />
+        <input className={inputClass + " w-28"} type="number" step="0.01" placeholder="利率 %/年" value={rate} onChange={(e) => setRate(e.target.value)} />
         <input
           className={inputClass + " w-20"}
-          placeholder="currency"
+          placeholder="货币"
           {...marks(DEBT, "currency")}
           list={CURRENCY_LIST}
-          title="The currency the debt is owed in. Proposed from your base currency; change it and it stays as you typed it."
+          title="这笔负债以什么货币计。默认按你的本位币给出；改成别的就按你输入的保留。"
           value={currency}
           onChange={(e) => setCurrencyChoice(e.target.value)}
         />
         <select className={inputClass} value={assetId} onChange={(e) => setAssetId(e.target.value)}>
-          <option value="">finances asset…</option>
+          <option value="">为哪项资产融资…</option>
           {assets.map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
         </select>
-        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "Save" : "Add"}</button>
+        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "保存" : "添加"}</button>
         {editId != null && <CancelButton onClick={reset} />}
       </form>
       {formError && <p className="text-down">{formError}</p>}
-      <RowsOrEmpty loading={loading} error={error} empty={items.length === 0} emptyText="No debts, lucky you.">
+      <RowsOrEmpty loading={loading} error={error} empty={items.length === 0} emptyText="没有负债，真幸运。">
         {items.map((l) => (
           <Row
             key={l.id}
@@ -243,7 +253,7 @@ function BalancesLevel({ liability }: { liability: Liability }) {
     try {
       setItems(await getBalances(liability.id));
     } catch (err) {
-      setError(apiError(err, "Could not load balances."));
+      setError(apiError(err, "无法加载余额。"));
     } finally {
       setLoading(false);
     }
@@ -251,10 +261,10 @@ function BalancesLevel({ liability }: { liability: Liability }) {
 
   return (
     <Section
-      title={`Outstanding balance: ${liability.name}`}
+      title={`未偿余额：${liability.name}`}
       explain={{
-        question: "What is the outstanding balance?",
-        text: "The remaining principal, as your amortization statement shows it.",
+        question: "什么是未偿余额？",
+        text: "剩余的本金，以你的还款计划表上的数字为准。",
       }}
     >
       <DatedAmountEditor
@@ -269,10 +279,10 @@ function BalancesLevel({ liability }: { liability: Liability }) {
         update={updateBalance}
         destroy={deleteBalance}
         onChanged={load}
-        noun="balance"
-        amountLabel="Remaining"
+        noun="余额"
+        amountLabel="剩余"
         needs={BALANCE}
-        emptyText="No balances yet."
+        emptyText="还没有余额。"
       />
     </Section>
   );

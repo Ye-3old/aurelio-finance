@@ -60,8 +60,8 @@ test("a goal stored in a yes/no question is said under it, and stays on record",
   assert.equal(canShow(BIG, stored), false);
   assert.equal(
     unshownAnswer(BIG, stored),
-    'On record: "Yes: a goal of 12,000 for a new kitchen by 2029", which is none of these answers. ' +
-      "Press one to replace it; saved without one, it stays as it is.",
+    '已记录：「Yes: a goal of 12,000 for a new kitchen by 2029」，不在这些答案里。' +
+      "点一个来替换它；不选就保存的话，它会原样保留。",
   );
 });
 
@@ -76,16 +76,16 @@ test("an answer the form offers, and no answer at all, say nothing", () => {
 test("a choice the options do not hold is said with what to do", () => {
   assert.equal(
     unshownAnswer(RISK, "Quite high"),
-    'On record: "Quite high", which is none of these options. ' +
-      "Pick one to replace it; saved without one, it stays as it is.",
+    '已记录：「Quite high」，不在这些选项里。' +
+      "选一个来替换它；不选就保存的话，它会原样保留。",
   );
 });
 
 test("a number box cannot show words, so they are said under it", () => {
   assert.equal(
     unshownAnswer(AGE, "35 anni"),
-    'On record: "35 anni", which is not a number. ' +
-      "Type one to replace it; saved without one, it stays as it is.",
+    '已记录：「35 anni」，不是一个数字。' +
+      "输一个来替换它；不选就保存的话，它会原样保留。",
   );
   assert.equal(canShow(AGE, " "), false);
 });

@@ -47,13 +47,13 @@ export function absentTickerCost(d: HoldingDraft): string | null {
   // a quantity and a price, and only a ticker fixes them.
   const dividends =
     d.policy === "dist"
-      ? " and its dividends will not be collected"
+      ? "，它的分红也收不到"
       : d.policy === "" && d.assetClass !== "crypto"
-        ? " and any dividends it pays will not be collected"
+        ? "，它派的分红也收不到"
         : "";
-  const onlyTicker = d.mode === "qty" ? "without a ticker it will not be priced" + dividends : null;
+  const onlyTicker = d.mode === "qty" ? "没有代码就不会有价格" + dividends : null;
   const lookedThrough = ISIN.test(asStored(d.isin));
-  const tickerOrIsin = lookedThrough ? null : "without a ticker or an ISIN it will not be looked through";
-  const said = [onlyTicker, tickerOrIsin].filter((c): c is string => c !== null).join(", and ");
-  return said ? said[0].toUpperCase() + said.slice(1) + "." : null;
+  const tickerOrIsin = lookedThrough ? null : "没有代码或 ISIN 就无法穿透";
+  const said = [onlyTicker, tickerOrIsin].filter((c): c is string => c !== null).join("，另外");
+  return said ? said[0].toUpperCase() + said.slice(1) + "。" : null;
 }

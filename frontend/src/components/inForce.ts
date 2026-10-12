@@ -21,33 +21,33 @@ type Summary = Pick<Schemas["CashFlowSummary"], "scheduled" | "ended" | "undated
 type LeftOut = Schemas["FlowNotCounted"];
 
 /** What the figures are, said once under them on both pages. */
-export const IN_FORCE = "In force today, as a monthly run-rate; one-off items excluded.";
+export const IN_FORCE = "按今天生效的收支折算成月度金额；一次性项目不计入。";
 
 const ONCE = "one_off";
 
 function counted(n: number, noun: string): string | null {
-  return n > 0 ? `${n} ${noun}${n === 1 ? "" : "s"}` : null;
+  return n > 0 ? `${n} 笔${noun}` : null;
 }
 
 /** "1 income and 2 expenses that start later", or null for none. */
 function phrase(flows: LeftOut[], one: string, many: string): string | null {
   const recurring = flows.filter((f) => f.frequency !== ONCE);
   const nouns = [
-    counted(recurring.filter((f) => f.side === "income").length, "income"),
-    counted(recurring.filter((f) => f.side === "expense").length, "expense"),
+    counted(recurring.filter((f) => f.side === "income").length, "收入"),
+    counted(recurring.filter((f) => f.side === "expense").length, "支出"),
   ].filter((n): n is string => n !== null);
   if (nouns.length === 0) return null;
-  return `${nouns.join(" and ")} that ${recurring.length === 1 ? one : many}`;
+  return `${nouns.join("和 ")}${recurring.length === 1 ? one : many}`;
 }
 
 /** What the figures leave out, by count: "1 income that starts later, 1
     expense that has ended". Null when they leave out nothing that repeats. */
 export function notCounted(summary: Summary): string | null {
   const parts = [
-    phrase(summary.scheduled, "starts later", "start later"),
-    phrase(summary.ended, "has ended", "have ended"),
+    phrase(summary.scheduled, "尚未开始", "尚未开始"),
+    phrase(summary.ended, "已结束", "已结束"),
   ].filter((p): p is string => p !== null);
-  return parts.length ? parts.join(", ") : null;
+  return parts.length ? parts.join("；") : null;
 }
 
 /** A flow with no first payment date is counted: said, since the figures
@@ -55,8 +55,8 @@ export function notCounted(summary: Summary): string | null {
 export function undatedLine(n: number): string | null {
   if (n <= 0) return null;
   return n === 1
-    ? "1 flow with no first payment date is counted as in force."
-    : `${n} flows with no first payment date are counted as in force.`;
+    ? "1 笔没有首次付款日期的收支按生效计入。"
+    : `${n} 笔没有首次付款日期的收支按生效计入。`;
 }
 
 /** The line a row carries when the figures leave it out, or undefined. */
@@ -68,10 +68,10 @@ export function leftOutLine(
   const later = summary.scheduled.find((f) => f.side === side && f.id === id);
   if (later) {
     return later.frequency === ONCE
-      ? `On ${later.start_date}, once: not in the monthly figures.`
-      : `Starts on ${later.start_date}: not counted until then.`;
+      ? `${later.start_date} 一次性发生，不计入月度金额。`
+      : `${later.start_date} 开始，此前不计入。`;
   }
   const gone = summary.ended.find((f) => f.side === side && f.id === id);
-  if (gone && gone.frequency !== ONCE) return `Ended on ${gone.end_date}: no longer counted.`;
+  if (gone && gone.frequency !== ONCE) return `${gone.end_date} 结束，之后不再计入。`;
   return undefined;
 }

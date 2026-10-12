@@ -48,7 +48,7 @@ export function missing(needs: Need[], values: Values): Need[] {
 
 function list(nouns: string[]): string {
   if (nouns.length === 1) return nouns[0];
-  return `${nouns.slice(0, -1).join(", ")} and ${nouns[nouns.length - 1]}`;
+  return `${nouns.slice(0, -1).join("、")}和${nouns[nouns.length - 1]}`;
 }
 
 /** What a refused press says, or null when nothing is missing.
@@ -60,7 +60,7 @@ function list(nouns: string[]): string {
 export function refusal(needs: Need[], values: Values): string | null {
   const gone = missing(needs, values);
   const plain = gone.filter((n) => !n.says);
-  if (plain.length > 0) return `Fill in ${list(plain.map((n) => n.noun))}.`;
+  if (plain.length > 0) return `请填写${list(plain.map((n) => n.noun))}。`;
   return gone.length > 0 ? (gone[0].says as string) : null;
 }
 
@@ -78,122 +78,128 @@ export function marks(
 
 // --- The rules, one per form ------------------------------------------------
 
-const NAME: Need = { key: "name", noun: "the name", ask: "What is it called?" };
-const AMOUNT: Need = { key: "amount", noun: "the amount", ask: "How much?" };
+const NAME: Need = { key: "name", noun: "名称", ask: "叫什么？" };
+const AMOUNT: Need = { key: "amount", noun: "金额", ask: "多少钱？" };
 
-export const INSTITUTION: Need[] = [{ ...NAME, ask: "Which bank or broker?" }];
+export const INSTITUTION: Need[] = [{ ...NAME, ask: "哪家银行或券商？" }];
 
-export const INCOME: Need[] = [{ ...NAME, ask: "What is it? e.g. Salary" }, AMOUNT];
-export const EXPENSE: Need[] = [{ ...NAME, ask: "What is it? e.g. Rent" }, AMOUNT];
+export const INCOME: Need[] = [{ ...NAME, ask: "是什么？如：工资" }, AMOUNT];
+export const EXPENSE: Need[] = [{ ...NAME, ask: "是什么？如：房租" }, AMOUNT];
 
 /** The dated series: a cash anchor, a valuation, a balance. `noun` and `ask`
     are the amount's, which is the one part that differs. */
 export function dated(noun: string, ask: string): Need[] {
   return [
-    { key: "date", noun: "the date" },
+    { key: "date", noun: "日期" },
     { key: "amount", noun, ask },
   ];
 }
 
 /** The three dated series. Their questions live here rather than at the
     call sites, so the fit test sees every question the forms can ask. */
-export const CASH_ANCHOR = dated("the cash", "How much?");
-export const VALUATION = dated("the value", "What is it worth?");
-export const BALANCE = dated("the balance", "How much is left?");
+export const CASH_ANCHOR = dated("现金", "多少钱？");
+export const VALUATION = dated("市值", "值多少？");
+export const BALANCE = dated("余额", "还剩多少？");
 
 export const REAL_ASSET: Need[] = [
-  { ...NAME, ask: "What is it? e.g. Milan flat" },
+  { ...NAME, ask: "是什么？如：米兰公寓" },
   {
     key: "currency",
-    noun: "the currency",
-    says: "Say which currency this asset is valued in.",
+    noun: "货币",
+    says: "请说明这项资产以什么货币计价。",
   },
 ];
 
 export const DEBT: Need[] = [
-  { ...NAME, ask: "What is it? e.g. Car loan" },
-  { key: "currency", noun: "the currency", says: "Say which currency this debt is in." },
+  { ...NAME, ask: "是什么？如：车贷" },
+  { key: "currency", noun: "货币", says: "请说明这笔负债是什么货币。" },
 ];
 
 /** A goal: the dropdown carries the meaning, so the free label is needed only
     for "other", where it IS the goal. */
 export function goal(type: string): Need[] {
   return [
-    { key: "type", noun: "what the goal is for" },
-    ...(type === "other" ? [{ key: "name", noun: "what the goal is", ask: "What is the goal?" }] : []),
-    { key: "currency", noun: "the currency", says: "Say which currency this goal is in." },
+    { key: "type", noun: "目标用途" },
+    ...(type === "other" ? [{ key: "name", noun: "目标内容", ask: "目标是什么？" }] : []),
+    { key: "currency", noun: "货币", says: "请说明这个目标是什么货币。" },
   ];
 }
 
 const CURRENCIES_MOVED =
-  "Say which currencies these are: what left the source, and what the destination was credited in.";
+  "请说明这两种货币各是什么：从转出方扣的是什么，转入方入账的是什么。";
 
 /** A transfer. Its source-or-destination is an either/or that no one field
     carries: `ends` is either of them, said as a sentence and marked on
     neither box. */
 export const TRANSFER: Need[] = [
-  { key: "date", noun: "the date" },
+  { key: "date", noun: "日期" },
   AMOUNT,
-  { key: "ends", noun: "a source or a destination", says: "Pick a source and/or a destination institution." },
-  { key: "currency", noun: "the currency", says: CURRENCIES_MOVED },
-  { key: "toCurrency", noun: "the currency", says: CURRENCIES_MOVED },
+  { key: "ends", noun: "转出方或转入方", says: "请选择转出机构和/或转入机构。" },
+  { key: "currency", noun: "货币", says: CURRENCIES_MOVED },
+  { key: "toCurrency", noun: "货币", says: CURRENCIES_MOVED },
 ];
 
 /** A PAC. At least one target needs a ticker; the first target's box carries
     the mark, since a second row left empty is simply ignored. Where each
     ticker is held is said by the form, per target, after these. */
 export const PLAN: Need[] = [
-  { ...NAME, ask: "What is it called?" },
-  { key: "amount", noun: "the budget", ask: "How much?" },
-  { key: "ticker", noun: "a ticker", ask: "Which ticker?" },
+  { ...NAME, ask: "叫什么？" },
+  { key: "amount", noun: "预算", ask: "多少钱？" },
+  { key: "ticker", noun: "代码", ask: "哪个代码？" },
   {
     key: "sourceId",
-    noun: "the account it is funded from",
-    says: "A plan has to take the money from somewhere: name the account it is funded from, so each contribution leaves a real balance.",
+    noun: "出资账户",
+    says: "定投计划总要从某处扣钱：请指定出资账户，每次投入才会动真实的余额。",
   },
 ];
 
 /** A position in a situation: a total, or a quantity and a price. */
 export function holding(mode: "total" | "qty"): Need[] {
   return [
-    { key: "name", noun: "the name", ask: "What is it? (type to search)" },
+    { key: "name", noun: "名称", ask: "是什么？（输入搜索）" },
     ...(mode === "qty"
       ? [
-          { key: "quantity", noun: "the quantity", ask: "Units?" },
-          { key: "unitPrice", noun: "the price", ask: "Price?" },
+          { key: "quantity", noun: "数量", ask: "多少份？" },
+          { key: "unitPrice", noun: "价格", ask: "什么价？" },
         ]
-      : [{ key: "value", noun: "the value", ask: "Worth?" }]),
+      : [{ key: "value", noun: "市值", ask: "值多少？" }]),
   ];
 }
 
-const CURRENCIES_TRADED = "Say which currencies these are: the price's, and the account's the money moved in.";
+const CURRENCIES_TRADED = "请说明这两种货币各是什么：价格用的货币，和资金实际进出账户的货币。";
 
 /** A ledger row. A close needs what came back, and zero is an answer; a
     buy, a sell or a dividend needs what was traded and at what, where a
     dividend's price is what each share paid. */
+/** How a ledger kind reads in a sentence ("a sell", "a dividend"). Display
+    only: `kind` itself stays the compared enum value. */
+function kindWord(kind: string): string {
+  return kind === "sell" ? "卖出" : kind === "dividend" ? "分红" : kind === "close" ? "清仓" : "交易";
+}
+
 export function transaction(kind: string, isClose: boolean): Need[] {
   return [
-    { key: "assetName", noun: "the asset", ask: "What is it? (type to search)" },
+    { key: "assetName", noun: "标的", ask: "是什么？（输入搜索）" },
     ...(isClose
-      ? [{ key: "fees", noun: "the proceeds", ask: "Proceeds?" }]
+      ? [{ key: "fees", noun: "回款", ask: "回款多少？" }]
       : [
-          { key: "symbol", noun: "the ticker", ask: "Ticker or ISIN?" },
-          { key: "quantity", noun: "the quantity", ask: "Units?" },
+          { key: "symbol", noun: "代码", ask: "代码或 ISIN？" },
+          { key: "quantity", noun: "数量", ask: "多少份？" },
           kind === "dividend"
-            ? { key: "unitPrice", noun: "the dividend per share", ask: "Per share?" }
-            : { key: "unitPrice", noun: "the price", ask: "Price?" },
+            ? { key: "unitPrice", noun: "每股分红", ask: "每股多少？" }
+            : { key: "unitPrice", noun: "价格", ask: "什么价？" },
         ]),
     {
       key: "institutionId",
-      noun: "the institution",
+      noun: "机构",
       says:
         kind === "buy"
-          ? "A buy has to come from somewhere: pick where you keep it, so the cash leaves the right account."
-          : `A ${kind} has to say where it is held: pick the institution, so the cash reaches the right account.`,
+          ? "买入要有来源：请选它存放在哪家机构，现金才会从对的账户扣出。"
+          : `这笔${kindWord(kind)}要说明持有位置：请选机构，现金才会进对的账户。`,
     },
-    { key: "currency", noun: "the currency", says: CURRENCIES_TRADED },
+    { key: "currency", noun: "货币", says: CURRENCIES_TRADED },
     ...(isClose
       ? []
-      : [{ key: "priceCurrency", noun: "the currency", says: CURRENCIES_TRADED }]),
+      : [{ key: "priceCurrency", noun: "货币", says: CURRENCIES_TRADED }]),
   ];
 }

@@ -18,27 +18,27 @@ const UNKNOWN = { cost_known: false, cost_estimated: false };
 test("an estimated average price names both of its sources", () => {
   assert.equal(
     avgCostTitle(ESTIMATED),
-    "Average price paid, ESTIMATED in part: some or all of it is a plan's buy priced at a market close, or a cost derived from a reported return, not a contract note",
+    "平均买入价，部分为预估：其中部分或全部来自定投按收盘价计的买入，或由申报收益率倒推的成本，并非交割单",
   );
 });
 
 test("a profit or loss on an estimated price says so, and names both sources", () => {
   assert.equal(
     plTitle(ESTIMATED),
-    "Profit or loss against a purchase price ESTIMATED in part (a plan's buy at a market close, or a cost derived from a reported return): real, but not verified against a contract note",
+    "相对部分预估的买入价的盈亏（定投按收盘价计的买入，或由申报收益率倒推的成本）：真实但未经交割单核对",
   );
 });
 
 test("a price paid and a price unknown read as they did", () => {
-  assert.equal(avgCostTitle(PAID), "Average price actually paid, from recorded purchases");
-  assert.equal(plTitle(PAID), "Profit or loss against the average price you paid");
+  assert.equal(avgCostTitle(PAID), "实际平均买入价，来自已记录的买入");
+  assert.equal(plTitle(PAID), "相对平均买入价的盈亏");
   assert.equal(
     avgCostTitle(UNKNOWN),
-    "No purchase price on record: this is the price the situation was recorded at, not what you paid",
+    "没有买入价记录：这是快照记账时的价格，不是你的买入成本",
   );
   assert.equal(
     plTitle(UNKNOWN),
-    "Movement since the situation was recorded, NOT profit: no purchase price is on record",
+    "快照记账以来的波动，并非盈亏：没有买入价记录",
   );
 });
 

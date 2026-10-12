@@ -8,27 +8,27 @@ import type { RealAsset } from "../api/realAssets";
 import type { Snapshot } from "../api/snapshots";
 import type { Focus } from "../nav";
 
-/* Records groups everything you ENTER — institutions and dated situations,
-   cash, real assets, debts, flows and plans — behind one top-level voice.
+/* Records groups everything you ENTER  institutions and dated situations,
+   cash, real assets, debts, flows and plans  behind one top-level voice.
    The app used to expose one tab per database table; grouping by activity
    (entering vs reading) is what took the nav from nine voices to five. */
 
 const PAGES = [
   {
     key: "wealth",
-    label: "Wealth",
+    label: "财富",
   },
   {
     key: "real",
-    label: "Real assets",
+    label: "实物资产",
   },
   {
     key: "debts",
-    label: "Debts",
+    label: "负债",
   },
   {
     key: "cash",
-    label: "Cash flow",
+    label: "现金流",
   },
 ] as const;
 

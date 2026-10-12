@@ -17,7 +17,7 @@ export interface CatalogueState {
   retry_after: string | null;
 }
 
-const MEANWHILE = "Meanwhile, what you type can be used as it is.";
+const MEANWHILE = "在此期间，你输入的内容可以照常使用。";
 
 /** The sentence for an empty catalogue, or null when there is nothing to say.
     `clockTime` turns the retry moment into the reader's own clock time. */
@@ -29,19 +29,18 @@ export function catalogueNotice(
   switch (status.state) {
     case "downloading":
       return (
-        "The fund catalogue is downloading by itself. The funds will show here " +
-        `as soon as it arrives. ${MEANWHILE}`
+        "基金目录正在自动下载。" +
+        `下载完成后基金会出现在这里。${MEANWHILE}`
       );
     case "failed":
       return (
-        "The fund catalogue could not be downloaded from justETF. The app tries " +
-        "again by itself when it is next opened or reloaded" +
-        (status.retry_after ? `, from ${clockTime(status.retry_after)}` : "") +
-        `. ${MEANWHILE}`
+        "基金目录无法从 justETF 下载。应用会在下次打开或刷新页面时自动重试" +
+        (status.retry_after ? `（最早 ${clockTime(status.retry_after)} 起）` : "") +
+        `。${MEANWHILE}`
       );
     default:
       // Empty, and nothing has asked since the server started: a page left
       // open while the backend was restarted.
-      return `The fund catalogue downloads by itself when the app opens. Reload the page to start it. ${MEANWHILE}`;
+      return `基金目录会在应用打开时自动下载。刷新页面即可开始。${MEANWHILE}`;
   }
 }

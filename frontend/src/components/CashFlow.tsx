@@ -71,7 +71,7 @@ const INCOME_CATEGORIES = ["", "salary", "freelance", "business", "rental", "div
 const EXPENSE_CATEGORIES = ["", "housing", "food", "transport", "utilities", "health", "insurance", "debt", "leisure", "education", "other"];
 
 function pct(x: number | null): string {
-  return x == null ? "n/a" : `${Math.round(x * 100)}%`;
+  return x == null ? "暂无" : `${Math.round(x * 100)}%`;
 }
 
 function subtitle(parts: (string | null | undefined)[]): string | undefined {
@@ -81,8 +81,8 @@ function subtitle(parts: (string | null | undefined)[]): string | undefined {
 
 function dateRange(start: string | null, end: string | null): string | undefined {
   if (start && end) return `${start} → ${end}`;
-  if (start) return `from ${start}`;
-  if (end) return `until ${end}`;
+  if (start) return `自 ${start}`;
+  if (end) return `至 ${end}`;
   return undefined;
 }
 
@@ -149,7 +149,7 @@ export default function CashFlow({
       setAnchors(a);
       setPositions(pf.rows);
     } catch (err) {
-      setError(apiError(err, "Could not reach the backend. Is it running on :8000?"));
+      setError(apiError(err, "无法连接后端。它是否运行在 :8000 上？"));
     } finally {
       setLoading(false);
     }
@@ -174,7 +174,7 @@ export default function CashFlow({
     onFocused();
   }, [focus, loading, onFocused]);
 
-  if (loading) return <p className="text-ink-soft">Loading…</p>;
+  if (loading) return <p className="text-ink-soft">加载中…</p>;
   if (error) return <p className="text-down">{error}</p>;
   // The base the reader chose, as the summary was computed in: what a new row
   // with no account to ask is proposed in.
@@ -189,24 +189,24 @@ export default function CashFlow({
       {summary && (
         <div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <StatCard label="Monthly income" value={money(summary.base_currency).format(summary.monthly_income)} valueClass="text-up" />
-            <StatCard label="Monthly expenses" value={money(summary.base_currency).format(summary.monthly_expenses)} valueClass="text-down" />
+            <StatCard label="每月收入" value={money(summary.base_currency).format(summary.monthly_income)} valueClass="text-up" />
+            <StatCard label="每月支出" value={money(summary.base_currency).format(summary.monthly_expenses)} valueClass="text-down" />
             <StatCard
-              label="Monthly net"
+              label="每月结余"
               value={money(summary.base_currency).format(summary.monthly_net)}
               valueClass={summary.monthly_net >= 0 ? "text-ink" : "text-down"}
             />
-            <StatCard label="Savings rate" value={pct(summary.savings_rate)} valueClass="text-olive" explain={SAVINGS_RATE} />
+            <StatCard label="储蓄率" value={pct(summary.savings_rate)} valueClass="text-olive" explain={SAVINGS_RATE} />
           </div>
           <p className="mt-3 text-sm text-ink-soft">
-            Income: active {money(summary.base_currency).format(summary.active_income)} · passive{" "}
-            {money(summary.base_currency).format(summary.passive_income)}. Expenses: essential{" "}
-            {money(summary.base_currency).format(summary.essential_expenses)} · discretionary{" "}
-            {money(summary.base_currency).format(summary.discretionary_expenses)}. {IN_FORCE}
+            收入：主动 {money(summary.base_currency).format(summary.active_income)} · 被动{" "}
+            {money(summary.base_currency).format(summary.passive_income)}。支出：必要{" "}
+            {money(summary.base_currency).format(summary.essential_expenses)} · 可选{" "}
+            {money(summary.base_currency).format(summary.discretionary_expenses)}。{IN_FORCE}
           </p>
           {(leftOut || undated) && (
             <p className="mt-1 text-sm text-ink-soft">
-              {[leftOut && `Not counted: ${leftOut} (marked below).`, undated].filter(Boolean).join(" ")}
+              {[leftOut && `未计入：${leftOut}（下方已标注）。`, undated].filter(Boolean).join(" ")}
             </p>
           )}
         </div>
@@ -244,7 +244,7 @@ function InstitutionSelect({
   value,
   onChange,
   institutions,
-  placeholder = "institution…",
+  placeholder = "机构…",
   required = false,
   title,
 }: {
@@ -431,35 +431,35 @@ function CashFlowSection<T extends CashFlowRow, P>({
     create: spec.create,
     update: spec.update,
     destroy: spec.destroy,
-    confirmDelete: (i) => `Delete ${spec.noun} "${i.name}"?`,
+    confirmDelete: (i) => `删除${spec.noun}「${i.name}」？`,
     onChanged,
   });
 
   return (
     <Section title={spec.title} hint={spec.hint} note={FIRST_PAYMENT_NOTE}>
       <form onSubmit={ed.submit} className="flex flex-wrap items-center gap-2">
-        <input className={inputClass} aria-label="Name" {...marks(spec.needs, "name")} value={ed.draft.name} onChange={(e) => ed.set("name")(e.target.value)} />
+        <input className={inputClass} aria-label="名称" {...marks(spec.needs, "name")} value={ed.draft.name} onChange={(e) => ed.set("name")(e.target.value)} />
         <select className={inputClass} value={ed.draft.tag} onChange={(e) => ed.set("tag")(e.target.value)}>
           {spec.tagOptions.map((t) => (<option key={t} value={t}>{t || `${spec.tagField}…`}</option>))}
         </select>
         <select className={inputClass} value={ed.draft.category} onChange={(e) => ed.set("category")(e.target.value)}>
-          {spec.categories.map((c) => (<option key={c} value={c}>{c || "category…"}</option>))}
+          {spec.categories.map((c) => (<option key={c} value={c}>{c || "分类…"}</option>))}
         </select>
-        <input className={inputClass + " w-28"} type="number" step="0.01" aria-label="Amount" {...marks(spec.needs, "amount")} value={ed.draft.amount} onChange={(e) => ed.set("amount")(e.target.value)} />
+        <input className={inputClass + " w-28"} type="number" step="0.01" aria-label="金额" {...marks(spec.needs, "amount")} value={ed.draft.amount} onChange={(e) => ed.set("amount")(e.target.value)} />
         <input
           className={inputClass + " w-20"}
-          placeholder="currency"
+          placeholder="货币"
           list={CURRENCY_LIST}
-          title="The currency the amount is in. Proposed from the institution's cash on the first payment's date; change it and it stays as you typed it."
+          title="金额所用的货币。默认按首笔收付日该机构的现金货币填写；手动改过就保持你输入的值。"
           value={ed.draft.currency || proposed(ed.draft)}
           onChange={(e) => ed.set("currency")(e.target.value)}
         />
         <select className={inputClass} value={ed.draft.frequency} onChange={(e) => ed.set("frequency")(e.target.value)}>
-          {FREQUENCIES.map((f) => (<option key={f} value={f}>{f || "frequency…"}</option>))}
+          {FREQUENCIES.map((f) => (<option key={f} value={f}>{f || "频率…"}</option>))}
         </select>
         <InstitutionSelect value={ed.draft.institutionId} onChange={ed.set("institutionId")} institutions={institutions} />
         <DateField label={flowDateLabel(ed.draft.frequency)} value={ed.draft.startDate} onChange={ed.set("startDate")} />
-        <DateField label="end" value={ed.draft.endDate} onChange={ed.set("endDate")} />
+        <DateField label="结束" value={ed.draft.endDate} onChange={ed.set("endDate")} />
         <EditorButtons editing={ed.editing} submitting={ed.submitting} onCancel={ed.reset} />
       </form>
       {ed.error && <p className="text-down">{ed.error}</p>}
@@ -484,11 +484,11 @@ function CashFlowSection<T extends CashFlowRow, P>({
 
 const INCOME: CashFlowSpec<IncomeSource, IncomeSourceCreate> = {
   side: "income",
-  title: "Income",
-  hint: "Institution = where it's credited (its cash).",
+  title: "收入",
+  hint: "机构 = 入账的地方（记入该机构的现金）。",
   needs: INCOME_NEEDS,
-  emptyText: "No income yet.",
-  noun: "income",
+  emptyText: "还没有收入。",
+  noun: "收入",
   tagField: "kind",
   tagOptions: KINDS,
   tagOf: (i) => i.kind,
@@ -501,11 +501,11 @@ const INCOME: CashFlowSpec<IncomeSource, IncomeSourceCreate> = {
 
 const EXPENSE: CashFlowSpec<Expense, ExpenseCreate> = {
   side: "expense",
-  title: "Expenses",
-  hint: "Institution = where it's paid from (its cash).",
+  title: "支出",
+  hint: "机构 = 付款的地方（从该机构的现金支出）。",
   needs: EXPENSE_NEEDS,
-  emptyText: "No expenses yet.",
-  noun: "expense",
+  emptyText: "还没有支出。",
+  noun: "支出",
   tagField: "nature",
   tagOptions: NATURES,
   tagOf: (x) => x.nature,
@@ -626,40 +626,40 @@ function TransferSection({
       reset();
       await onChanged();
     } catch (err) {
-      setError(apiError(err, "Save failed."));
+      setError(apiError(err, "保存失败。"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function remove(t: Transfer) {
-    if (!window.confirm("Delete this transfer?")) return;
+    if (!window.confirm("删除这笔转账？")) return;
     setError(null);
     try {
       await deleteTransfer(t.id);
       if (editId === t.id) reset();
       await onChanged();
     } catch (err) {
-      setError(apiError(err, "Delete failed."));
+      setError(apiError(err, "删除失败。"));
     }
   }
 
   return (
     <Section
-      title="Transfers"
-      hint="Move cash between two of your institutions on a date. It lowers the source's cash and raises the destination's. Between two currencies, what arrived is worked out at the ECB rate of that date unless you type it from the statement."
+      title="转账"
+      hint="在你名下的两个机构之间划转现金。转出方现金减少，转入方现金增加。跨货币时，到账金额默认按当日 ECB 汇率折算，除非你按对账单手动填写。"
     >
       <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
-        <DateField label="on" value={date} onChange={setDate} mark={marks(TRANSFER, "date")} />
-        <InstitutionSelect value={fromId} onChange={setFromId} institutions={institutions} placeholder="from (or external)…" />
+        <DateField label="日期" value={date} onChange={setDate} mark={marks(TRANSFER, "date")} />
+        <InstitutionSelect value={fromId} onChange={setFromId} institutions={institutions} placeholder="转出（或外部）…" />
         <span className="text-ink-faint">→</span>
-        <InstitutionSelect value={toId} onChange={setToId} institutions={institutions} placeholder="to (or external)…" />
-        <input className={inputClass + " w-28"} type="number" step="0.01" aria-label="Amount" {...marks(TRANSFER, "amount")} value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <InstitutionSelect value={toId} onChange={setToId} institutions={institutions} placeholder="转入（或外部）…" />
+        <input className={inputClass + " w-28"} type="number" step="0.01" aria-label="金额" {...marks(TRANSFER, "amount")} value={amount} onChange={(e) => setAmount(e.target.value)} />
         <input
           className={inputClass + " w-20"}
-          placeholder="currency"
+          placeholder="货币"
           list={CURRENCY_LIST}
-          title="The currency that left the source account"
+          title="从转出账户划出的货币"
           {...marks(TRANSFER, "currency")}
           value={currency}
           onChange={(e) => setCurrencyChoice(e.target.value)}
@@ -667,9 +667,9 @@ function TransferSection({
         <span className="text-ink-faint">→</span>
         <input
           className={inputClass + " w-20"}
-          placeholder="currency"
+          placeholder="货币"
           list={CURRENCY_LIST}
-          title="The currency the destination account was credited in"
+          title="转入账户入账的货币"
           {...marks(TRANSFER, "toCurrency")}
           value={toCurrency}
           onChange={(e) => setToCurrencyChoice(e.target.value)}
@@ -680,32 +680,32 @@ function TransferSection({
             type="number"
             step="any"
             min="0"
-            placeholder={`Arrived in ${toCurrency || "…"}`}
-            title="What the destination was actually credited, from its statement. Leave it blank and it is worked out at the ECB rate of the date. Your bank's rate will differ a little."
+            placeholder={`到账（${toCurrency || "…"}）`}
+            title="转入账户实际入账的金额，按对账单填写。留空则按当日 ECB 汇率折算，与你银行的实际汇率会略有出入。"
             value={arrived}
             onChange={(e) => setArrived(e.target.value)}
           />
         )}
-        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "Save" : "Add"}</button>
+        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "保存" : "添加"}</button>
         {editId != null && (
           <button type="button" onClick={reset} className="rounded-sm px-3 py-2 text-sm text-ink-soft hover:text-ink">
-            Cancel
+            取消
           </button>
         )}
       </form>
       {error && <p className="text-down">{error}</p>}
-      <RowsOrEmpty loading={false} error={null} empty={items.length === 0} emptyText="No transfers yet.">
+      <RowsOrEmpty loading={false} error={null} empty={items.length === 0} emptyText="还没有转账。">
         {items.map((t) => (
           <Row
             key={t.id}
             onEdit={() => startEdit(t)}
             onDelete={() => remove(t)}
-            title={`${instName(t.from_institution_id) ?? "External"} → ${instName(t.to_institution_id) ?? "External"}`}
+            title={`${instName(t.from_institution_id) ?? "外部"} → ${instName(t.to_institution_id) ?? "外部"}`}
             subtitle={[
               t.date,
               // A credit fixed at one day's rate says which day, so it can be
               // held against the statement.
-              t.fx_as_of ? `at the ECB rate of ${t.fx_as_of}` : null,
+              t.fx_as_of ? `按 ${t.fx_as_of} 的 ECB 汇率` : null,
             ]
               .filter(Boolean)
               .join(" · ")}
@@ -968,7 +968,7 @@ function PlanSection({
     // above once the plain fields are in.
     if (homeless.length > 0) {
       setError(
-        `Say where ${homeless.map((t) => t.symbol.trim().toUpperCase() || "it").join(", ")} will be held. A position held nowhere is one no situation can photograph and no sale can settle.`,
+        `请说明 ${homeless.map((t) => t.symbol.trim().toUpperCase() || "它").join(", ")} 将存放在哪个机构。没有存放机构的持仓，快照无法拍到它，卖出也无法结算。`,
       );
       return;
     }
@@ -1003,21 +1003,21 @@ function PlanSection({
       reset();
       await onChanged();
     } catch (err) {
-      setError(apiError(err, "Save failed."));
+      setError(apiError(err, "保存失败。"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function remove(p: AccumulationPlan) {
-    if (!window.confirm(`Delete plan "${p.name}"?`)) return;
+    if (!window.confirm(`删除计划「${p.name}」？`)) return;
     setError(null);
     try {
       await deleteAccumulationPlan(p.id);
       if (editId === p.id) reset();
       await onChanged();
     } catch (err) {
-      setError(apiError(err, "Delete failed."));
+      setError(apiError(err, "删除失败。"));
     }
   }
 
@@ -1033,10 +1033,10 @@ function PlanSection({
               : t.asset_name || t.symbol,
           )
           .join(" + ")
-      : "nothing yet";
+      : "暂无标的";
     const insts = [...new Set(p.targets.map((t) => instName(t.institution_id)).filter(Boolean))];
     return subtitle([
-      `from ${instName(p.source_institution_id) ?? "cash"} → ${tgt}`,
+      `从 ${instName(p.source_institution_id) ?? "现金"} → ${tgt}`,
       insts.join(", ") || undefined,
       dateRange(p.start_date, p.end_date),
     ]);
@@ -1057,29 +1057,29 @@ function PlanSection({
     const amount = money(p.currency, "cents").format(p.carried_remainder);
     const ended = p.end_date != null && p.end_date < todayISO();
     return ended
-      ? `${amount} set aside and never invested: this plan has ended`
-      : `${amount} set aside, waiting for the next contribution`;
+      ? `${amount} 已留存但从未投入：该计划已结束`
+      : `${amount} 已留存，等待下一次投入`;
   }
 
   return (
     <Section
-      title="PAC"
-      hint="Recurring buys: how much moves, into what, how often."
+      title="定投"
+      hint="定期买入：每次投多少、买进什么、多久一次。"
       note={PLAN_NOTE}
       explain={{
-        question: "How does a PAC work?",
-        text: "A plan names both ends (the account each contribution leaves, and where each investment is held), because money moves from one to the other and a plan that says neither is describing a purchase nobody made. With several targets the budget is spent as one pot, so a whole-unit broker leaves one small remainder instead of one per fund, and it carries to the next contribution.",
+        question: "定投是怎么运作的？",
+        text: "计划要写明两端（每期扣款的账户，以及持仓存放的机构），因为钱从前者流向后者，两端都不写的计划描述的是一笔不存在的买入。多个标的共用一个预算池，整数份额的券商只会留下一笔小额余数（而不是每只基金各留一笔），并结转到下一次投入。",
       }}
     >
       <form onSubmit={submit} className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <input className={inputClass} aria-label="Plan name" {...marks(PLAN, "name")} value={name} onChange={(e) => setName(e.target.value)} />
-          <input className={inputClass + " w-28"} type="number" step="0.01" aria-label="Budget" {...marks(PLAN, "amount")} title="Total contributed per occurrence, split across the targets below" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <input className={inputClass} aria-label="计划名称" {...marks(PLAN, "name")} value={name} onChange={(e) => setName(e.target.value)} />
+          <input className={inputClass + " w-28"} type="number" step="0.01" aria-label="预算" {...marks(PLAN, "amount")} title="每期投入的总金额，按下方标的分配" value={amount} onChange={(e) => setAmount(e.target.value)} />
           <input
             className={inputClass + " w-20"}
-            placeholder="currency"
+            placeholder="货币"
             list={CURRENCY_LIST}
-            title="The currency the contribution is paid in: the source account's cash. Proposed from that account on the first buy's date; change it and it stays as you typed it."
+            title="每期投入所用的货币：来自出资账户的现金。默认按首笔买入日该账户的货币填写；手动改过就保持你输入的值。"
             value={currency}
             onChange={(e) => setCurrencyChoice(e.target.value)}
           />
@@ -1090,21 +1090,21 @@ function PlanSection({
             className={inputClass}
             value={execution}
             onChange={(e) => setExecution(e.target.value)}
-            title="How your broker fills the order: whole units only (the remainder stays in cash), or exact fractional amounts, spending the contribution to the cent. Check which one yours does; it changes what a contribution buys."
+            title="你的券商如何成交：只买整数份额（余数留在现金），或按金额精确到分买入。确认你的券商是哪一种，这决定每期买到多少。"
           >
-            <option value="whole_units">whole units</option>
-            <option value="fractional">fractional</option>
+            <option value="whole_units">整数份额</option>
+            <option value="fractional">碎股</option>
           </select>
           <InstitutionSelect
             value={sourceId}
             onChange={pickSource}
             institutions={institutions}
-            placeholder="Which account funds it?"
+            placeholder="哪个账户出资？"
             required
-            title="The account each contribution is taken from. Required: a plan that does not say where the money comes from cannot take it from anywhere, and its buys spend money no account ever loses."
+            title="每期扣款的账户。必填：不写钱从哪来的计划无处扣款，它的买入花的是不属于任何账户的钱。"
           />
           <DateField label={PLAN_DATE_LABEL} value={startDate} onChange={setStartDate} />
-          <DateField label="end" value={endDate} onChange={setEndDate} />
+          <DateField label="结束" value={endDate} onChange={setEndDate} />
         </div>
 
         {/* In view, under the date that causes it: a consequence, which a "?"
@@ -1142,26 +1142,26 @@ function PlanSection({
                 value={t.name}
                 onChange={(v) => patchTarget(t.key, { name: v })}
                 owned={ownedForPicker}
-                placeholder="Buy what? Type to search"
+                placeholder="买什么？输入以搜索"
                 onPick={(c) => applyPick(t.key, c)}
               />
-              <input className={inputClass + " w-32"} aria-label="Ticker" placeholder="Ticker" {...(i === 0 ? marks(PLAN, "ticker") : {})} title="Yahoo ticker with exchange suffix (e.g. VWCE.MI). A listing in another currency is bought at its close converted into the plan's currency, at the ECB rate of that day" value={t.symbol} onChange={(e) => patchTarget(t.key, { symbol: e.target.value })} />
-              <input className={inputClass + " w-36"} placeholder="ISIN (optional)" value={t.isin} onChange={(e) => patchTarget(t.key, { isin: e.target.value })} />
+              <input className={inputClass + " w-32"} aria-label="代码" placeholder="代码" {...(i === 0 ? marks(PLAN, "ticker") : {})} title="Yahoo 代码，带交易所后缀（如 VWCE.MI）。其他货币的标的按当日 ECB 汇率折算成计划货币，以当日收盘价买入" value={t.symbol} onChange={(e) => patchTarget(t.key, { symbol: e.target.value })} />
+              <input className={inputClass + " w-36"} placeholder="ISIN（可选）" value={t.isin} onChange={(e) => patchTarget(t.key, { isin: e.target.value })} />
               <InstitutionSelect
                 value={t.institutionId}
                 onChange={(v) => patchTarget(t.key, { institutionId: v })}
                 institutions={institutions}
-                placeholder="Where is it held?"
+                placeholder="存放在哪？"
                 required
-                title="Where this investment will be held. Required: a position held at no institution is one no situation can photograph and no sale can settle. Pre-filled from the account funding the plan: change it if you buy this one somewhere else."
+                title="这笔投资将存放的机构。必填：没有存放机构的持仓，快照无法拍到它，卖出也无法结算。默认已填入计划的出资账户，若这笔买在别处请修改。"
               />
               <input
                 className={inputClass + " w-20"}
                 type="number"
                 step="0.1"
                 min="0"
-                placeholder="share"
-                title="Relative share of the budget: 1/1/1 and 40/30/30 mean the same thing"
+                placeholder="占比"
+                title="预算的相对占比：1/1/1 和 40/30/30 是同一个意思"
                 value={t.weight}
                 onChange={(e) => patchTarget(t.key, { weight: e.target.value })}
               />
@@ -1173,7 +1173,7 @@ function PlanSection({
                   type="button"
                   onClick={() => setTargets((ts) => ts.filter((x) => x.key !== t.key))}
                   className="rounded-sm px-2 py-1 text-sm text-ink-faint hover:text-down"
-                  title="Remove this target"
+                  title="移除该标的"
                 >
                   ×
                 </button>
@@ -1186,11 +1186,11 @@ function PlanSection({
               onClick={() => setTargets((ts) => [...ts, emptyTarget(sourceId)])}
               className="rounded-sm text-sm text-olive hover:underline"
             >
-              + add another investment
+              + 再加一个投资标的
             </button>
             {filled.length > 1 && amount && (
               <span className="text-xs text-ink-faint">
-                {money(currency).format(Number(amount))} split {filled.map((t) => `${share(t)}%`).join(" / ")}
+                {money(currency).format(Number(amount))} 按 {filled.map((t) => `${share(t)}%`).join(" / ")} 分配
               </span>
             )}
           </div>
@@ -1198,11 +1198,11 @@ function PlanSection({
 
         <div className="flex items-center gap-2">
           <button className={btnClass} disabled={submitting}>
-            {submitting ? "..." : editId != null ? "Save" : "Add"}
+            {submitting ? "..." : editId != null ? "保存" : "添加"}
           </button>
           {editId != null && (
             <button type="button" onClick={reset} className="rounded-sm px-3 py-2 text-sm text-ink-soft hover:text-ink">
-              Cancel
+              取消
             </button>
           )}
         </div>
@@ -1215,7 +1215,7 @@ function PlanSection({
             <span key={i.id}>
               {n > 0 && " · "}
               <button type="button" onClick={() => onOpenAccount(i)} className="text-olive underline-offset-2 hover:underline">
-                Open {i.name}
+                打开 {i.name}
               </button>
             </span>
           ))}
@@ -1224,14 +1224,13 @@ function PlanSection({
       {unknown.length > 0 && (
         <p
           className="border-l-2 border-warn bg-warn-tint px-3 py-2 text-xs text-warn"
-          title="Executions are matched to positions by exact ticker, so a different spelling silently starts a SECOND position for the same fund instead of adding to the one you hold. If you are starting a new plan on something you do not own yet, this is expected: the first execution creates it."
+          title="成交按代码精确匹配持仓，拼写稍有不同就会为同一只基金静默开出第二个持仓，而不是加到你已有的持仓上。如果你是在为还没买过的标的新开计划，这是正常的：第一笔成交会创建它。"
         >
-          <b>{unknown.map((t) => t.symbol.trim().toUpperCase()).join(", ")}</b> matches no
-          position you hold: fine for a new plan, but a typo starts a second position
-          instead of adding to yours.
+          <b>{unknown.map((t) => t.symbol.trim().toUpperCase()).join(", ")}</b> 与你持有的任何持仓都不匹配：
+          新开计划没问题，但代码拼错会另开一个持仓，而不是加到你已有的持仓上。
         </p>
       )}
-      <RowsOrEmpty loading={false} error={null} empty={items.length === 0} emptyText="No PACs yet.">
+      <RowsOrEmpty loading={false} error={null} empty={items.length === 0} emptyText="还没有定投。">
         {items.map((p) => (
           <Row
             key={p.id}

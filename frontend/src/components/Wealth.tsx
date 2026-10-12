@@ -74,7 +74,7 @@ const dangerBtnClass =
 // The backend's refusals are written as sentences but end without a full stop
 // ("Broker B already has a situation on 2026-09-06"), and what we add after one
 // has to read as a second sentence rather than a run-on.
-const asSentence = (s: string) => (s.endsWith(".") ? s : s + ".");
+const asSentence = (s: string) => (s.endsWith(".") || s.endsWith("。") ? s : s + "。");
 
 // ---- Drill-down: Institutions -> (Cash register + Investment situations) ----
 /* Which account and which situation are open is App's state, not this page's.
@@ -136,7 +136,7 @@ export default function Wealth({
 
   const crumbs: Crumb[] = [
     {
-      label: "Institutions",
+      label: "机构",
       active: !institution,
       onClick: () => {
         onInstitution(null);
@@ -188,7 +188,7 @@ function InstitutionsLevel({ onSelect }: { onSelect: (i: Institution) => void })
     try {
       setItems(await getInstitutions());
     } catch (err) {
-      setError(apiError(err, "Could not reach the backend. Is it running on :8000?"));
+      setError(apiError(err, "无法连接后端，后端是否在 :8000 上运行？"));
     } finally {
       setLoading(false);
     }
@@ -222,34 +222,34 @@ function InstitutionsLevel({ onSelect }: { onSelect: (i: Institution) => void })
       reset();
       await load();
     } catch (err) {
-      setFormError(apiError(err, "Save failed."));
+      setFormError(apiError(err, "保存失败。"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function remove(it: Institution) {
-    if (!window.confirm(`Delete "${it.name}"? This also removes its situations, holdings and cash anchors.`)) return;
+    if (!window.confirm(`删除「${it.name}」？它的快照、持仓和现金锚点也会一并删除。`)) return;
     setError(null);
     try {
       await deleteInstitution(it.id);
       if (editId === it.id) reset();
       await load();
     } catch (err) {
-      setError(apiError(err, "Delete failed."));
+      setError(apiError(err, "删除失败。"));
     }
   }
 
   return (
-    <Section title="Institutions">
+    <Section title="机构">
       <form onSubmit={submit} className="flex flex-wrap gap-2">
-        <input className={inputClass} aria-label="Name of the bank or broker" {...marks(INSTITUTION, "name")} value={name} onChange={(e) => setName(e.target.value)} />
-        <input className={inputClass} placeholder="Type (e.g. bank)" value={type} onChange={(e) => setType(e.target.value)} />
-        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "Save" : "Add"}</button>
+        <input className={inputClass} aria-label="银行或券商名称" {...marks(INSTITUTION, "name")} value={name} onChange={(e) => setName(e.target.value)} />
+        <input className={inputClass} placeholder="类型（如：银行）" value={type} onChange={(e) => setType(e.target.value)} />
+        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "保存" : "添加"}</button>
         {editId != null && <CancelButton onClick={reset} />}
       </form>
       {formError && <p className="text-down">{formError}</p>}
-      <RowsOrEmpty loading={loading} error={error} empty={items.length === 0} emptyText="No institutions yet.">
+      <RowsOrEmpty loading={loading} error={error} empty={items.length === 0} emptyText="还没有机构。">
         {items.map((it) => (
           <Row
             key={it.id}
@@ -263,10 +263,10 @@ function InstitutionsLevel({ onSelect }: { onSelect: (i: Institution) => void })
             // between, and every quantity as old as that single day.
             subtitle={
               it.snapshot_count === 0
-                ? "no situation recorded yet"
+                ? "还没有记录快照"
                 : it.snapshot_count === 1
-                  ? `one situation only (${it.latest_snapshot}): no history to compare against yet`
-                  : `${it.snapshot_count} situations · latest ${it.latest_snapshot}`
+                  ? `仅一份快照（${it.latest_snapshot}），还没有可对比的历史`
+                  : `${it.snapshot_count} 份快照 · 最新 ${it.latest_snapshot}`
             }
             note={it.notes}
           />
@@ -366,7 +366,7 @@ function CashRegister({
       setPosition(pos);
       setAnchors(anc);
     } catch (err) {
-      setError(apiError(err, "Could not load this account's cash."));
+      setError(apiError(err, "无法加载该账户的现金。"));
     } finally {
       setLoading(false);
     }
@@ -374,15 +374,15 @@ function CashRegister({
 
   return (
     <Section
-      title="Cash"
+      title="现金"
       aside={
         // Nothing while it loads, as the investments half does: "unknown"
         // is for a position that failed to load, not one still on its way.
         !position && loading ? undefined : (
           <span className="text-right text-sm text-ink-soft">
-            today{" "}
+            今日{" "}
             <span className="text-xl font-semibold text-ink">
-              {position ? money(position.base_currency).format(position.projected) : "unknown"}
+              {position ? money(position.base_currency).format(position.projected) : "未知"}
             </span>
           </span>
         )
@@ -390,36 +390,34 @@ function CashRegister({
     >
       {position && position.anchor_date && (
         <p className="text-xs text-ink-soft">
-          From anchor {money(position.base_currency).format(position.anchor_amount)} on {position.anchor_date}:{" "}
-          <Term go={go} to="income" dest="Records → Cash flow, where income is entered">
-            + income {money(position.base_currency).format(position.income)}
+          从锚点 {money(position.base_currency).format(position.anchor_amount)}（{position.anchor_date}）起：{" "}
+          <Term go={go} to="income" dest="记录 → 现金流，收入在此录入">
+            + 收入 {money(position.base_currency).format(position.income)}
           </Term>{" "}
-          <Term go={go} to="expenses" dest="Records → Cash flow, where expenses are entered">
-            − expenses {money(position.base_currency).format(position.expenses)}
+          <Term go={go} to="expenses" dest="记录 → 现金流，支出在此录入">
+            − 支出 {money(position.base_currency).format(position.expenses)}
           </Term>{" "}
           ·{" "}
-          <Term go={go} to="transfers" dest="Records → Cash flow, where transfers are entered">
-            transfers +{money(position.base_currency).format(position.transfers_in)} / −
+          <Term go={go} to="transfers" dest="记录 → 现金流，转账在此录入">
+            转账 +{money(position.base_currency).format(position.transfers_in)} / −
             {money(position.base_currency).format(position.transfers_out)}
           </Term>{" "}
-          <Term go={go} to="ledger" dest="Portfolio's ledger, where purchases are entered">
-            − buys {money(position.base_currency).format(position.buys)}
+          <Term go={go} to="ledger" dest="持仓的流水，买入在此录入">
+            − 买入 {money(position.base_currency).format(position.buys)}
           </Term>{" "}
-          <Term go={go} to="ledger" dest="Portfolio's ledger, where sales and dividends are entered">
-            + sells/dividends {money(position.base_currency).format(position.sells)}
+          <Term go={go} to="ledger" dest="持仓的流水，卖出和分红在此录入">
+            + 卖出/分红 {money(position.base_currency).format(position.sells)}
           </Term>
         </p>
       )}
       {position && !position.anchor_date && anchors.length === 0 && (
         <p className="text-xs text-warn">
-          No anchor yet. Add the actual cash you held at a date below. Linked salaries, costs and
-          transfers after that date are then projected automatically.
+          还没有锚点。请在下方填写某一天持有的实际现金。该日期之后关联的收入、支出和转账会自动推算。
         </p>
       )}
       {position && !position.anchor_date && anchors.length > 0 && (
         <p className="text-xs text-warn">
-          Your earliest anchor is dated {anchors[0].date}, which is in the future, so cash will start
-          projecting from that date. If you meant "today", edit it with ✎.
+          最早的锚点日期是 {anchors[0].date}，在未来，现金将从该日起推算。若你指的是「今天」，请用 ✎ 修改。
         </p>
       )}
 
@@ -429,7 +427,7 @@ function CashRegister({
         loadError={error}
         dateOf={(a) => a.date}
         amountOf={(a) => a.amount}
-        subtitleOf={() => "actual balance"}
+        subtitleOf={() => "实际余额"}
         currencyOf={(a) => a.currency}
         // An anchor is where an account's currency is SAID, and every proposal
         // elsewhere reads it back: a second anchor opening at the new-row
@@ -449,17 +447,17 @@ function CashRegister({
         update={updateCashAnchor}
         destroy={deleteCashAnchor}
         onChanged={load}
-        noun="cash anchor"
-        dateLabel="balance on"
+        noun="现金锚点"
+        dateLabel="余额日期"
         // Today, because the common case is typing in the cash you are holding
         // as you read it — unlike a valuation, which is as of a day on a
         // statement and should be picked deliberately.
         blankDate={todayISO()}
-        amountLabel="Actual cash"
+        amountLabel="实际现金"
         needs={CASH_ANCHOR}
         amountWidth="w-32"
-        addLabel="Add anchor"
-        emptyText="No anchors yet."
+        addLabel="添加锚点"
+        emptyText="还没有锚点。"
       />
     </Section>
   );
@@ -564,7 +562,7 @@ function SnapshotsLevel({
         setHeldUnknown(true);
       }
     } catch (err) {
-      setError(apiError(err, "Could not load situations."));
+      setError(apiError(err, "无法加载快照。"));
     } finally {
       setLoading(false);
     }
@@ -607,15 +605,15 @@ function SnapshotsLevel({
       !window.confirm(
         // One multi-line template literal, so the dialog's shape is visible
         // in the source instead of reconstructed from escapes.
-        `An empty situation becomes this account's authority for ${date}.
+        `\u7a7a\u767d\u5feb\u7167\u5c06\u6210\u4e3a\u8be5\u8d26\u6237 ${date} \u7684\u6743\u5a01\u8bb0\u5f55\u3002
 
-${held.length === 1 ? "This position" : `These ${held.length} positions`} will leave your net worth unless you re-enter ${held.length === 1 ? "it" : "them"} here:
+${held.length === 1 ? "\u8be5\u6301\u4ed3" : `\u8fd9 ${held.length} \u4e2a\u6301\u4ed3`}\u82e5\u4e0d\u5728\u6b64\u91cd\u65b0\u5f55\u5165\uff0c\u5c06\u4ece\u4f60\u7684\u51c0\u8d44\u4ea7\u4e2d\u6d88\u5931\uff1a
 
     ${held.map((r) => r.asset_name).join(" \u00b7 ")}
 
-They will be reported as unaccounted for, not removed in silence.
+\u5b83\u4eec\u4f1a\u88ab\u6807\u8bb0\u4e3a\u4e0b\u843d\u4e0d\u660e\uff0c\u800c\u4e0d\u662f\u88ab\u6084\u6084\u5220\u9664\u3002
 
-\u201cStart from the last one\u201d keeps them. Continue anyway?`,
+\u300c\u4ece\u4e0a\u4e00\u4efd\u7ee7\u7eed\u300d\u4f1a\u4fdd\u7559\u5b83\u4eec\u3002\u4ecd\u8981\u7ee7\u7eed\u5417\uff1f`,
       )
     )
       return;
@@ -625,7 +623,7 @@ They will be reported as unaccounted for, not removed in silence.
     try {
       await createSnapshot(institution.id, { date });
     } catch (err) {
-      setFormError(apiError(err, "Creation failed."));
+      setFormError(apiError(err, "创建失败。"));
     } finally {
       // Reloaded even on failure: a refusal about a date can only point at the
       // situation holding it if the list in hand is the current one.
@@ -650,11 +648,11 @@ They will be reported as unaccounted for, not removed in silence.
       });
       setPrefillNote(
         s.needs_attention.length
-          ? `Copied from ${s.copied_from}. ${s.repriced.length} priced from the market. Only ${s.needs_attention.join(", ")} still needs you.`
-          : `Copied from ${s.copied_from}, all ${s.repriced.length} positions priced from the market.`,
+          ? `已从 ${s.copied_from} 复制。${s.repriced.length} 个已按市场价重估。只有 ${s.needs_attention.join("、")} 还需要你处理。`
+          : `已从 ${s.copied_from} 复制，全部 ${s.repriced.length} 个持仓均已按市场价重估。`,
       );
     } catch (err) {
-      setFormError(apiError(err, "Could not start from the previous situation."));
+      setFormError(apiError(err, "无法从上一份快照开始。"));
     } finally {
       await load();
       setSubmitting(false);
@@ -662,20 +660,20 @@ They will be reported as unaccounted for, not removed in silence.
   }
 
   async function remove(s: Snapshot) {
-    if (!window.confirm(`Delete the situation of ${s.date}? This also removes its holdings.`)) return;
+    if (!window.confirm(`删除 ${s.date} 的快照？它的持仓也会一并删除。`)) return;
     setError(null);
     setFormError(null);
     try {
       await deleteSnapshot(s.id);
       await load();
     } catch (err) {
-      setError(apiError(err, "Delete failed."));
+      setError(apiError(err, "删除失败。"));
     }
   }
 
   return (
     <Section
-      title="Investment situations"
+      title="投资快照"
       /* The other half of "how much do I have here?". The page already had
          these rows: `held` is fetched for the omissions notice and for the
          dialog that names what an empty situation would drop, so this is the
@@ -703,13 +701,13 @@ They will be reported as unaccounted for, not removed in silence.
            there is not being quiet, it is letting a stale row answer for it. */
         loading ? undefined : (
           <span className="text-right text-sm text-ink-soft">
-            held{" "}
+            持有{" "}
             <span className="text-xl font-semibold text-ink">
-              {heldUnknown || heldBase == null ? "unknown" : money(heldBase).format(heldTotal)}
+              {heldUnknown || heldBase == null ? "未知" : money(heldBase).format(heldTotal)}
             </span>
             {heldUnknown ? (
               <span className="block text-xs text-warn">
-                the portfolio did not load: this is not a zero
+                持仓未能加载：这不是零
               </span>
             ) : (
               heldCarried > 0 &&
@@ -730,16 +728,16 @@ They will be reported as unaccounted for, not removed in silence.
                       much of the total is a figure somebody recorded, not one
                       a market quoted today. */}
                   {heldCarried === heldTotal
-                    ? "carried from what was recorded, not priced"
-                    : `${money(heldBase).format(heldCarried)} of it carried from what was recorded, not priced`}
+                    ? "沿用记录值，未经市场定价"
+                    : `其中 ${money(heldBase).format(heldCarried)} 沿用记录值，未经市场定价`}
                 </span>
               )
             )}
           </span>
         )
       }
-      hint="Your investment positions at a date. Cash lives in the Cash section above."
-      note="To update, start a new date from the previous one. Editing an old situation rewrites what that day said."
+      hint="你在某个日期的投资持仓。现金在上面的「现金」一节。"
+      note="更新时，从上一份开始填新日期。编辑旧快照会改写当天的记录。"
     >
       {/* What this account has already failed to account for, on the page where
           the situation that did it is written. The Dashboard and the Portfolio
@@ -750,10 +748,10 @@ They will be reported as unaccounted for, not removed in silence.
           purpose: the outstanding question comes before the chance to declare
           another situation on top of it. */}
       {heldBase != null && (
-        <OmissionsNotice items={missing} arrivals={instead} where="in Portfolio" baseCurrency={heldBase} />
+        <OmissionsNotice items={missing} arrivals={instead} where="在持仓中" baseCurrency={heldBase} />
       )}
       <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
-        <input className={inputClass} type="date" aria-label="Date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <input className={inputClass} type="date" aria-label="日期" value={date} onChange={(e) => setDate(e.target.value)} />
         <button
           type="button"
           onClick={prefill}
@@ -761,11 +759,11 @@ They will be reported as unaccounted for, not removed in silence.
           className={btnClass}
           title={
             items.length === 0
-              ? "There is nothing to start from yet: this account's first situation has to be declared."
-              : "Copies the positions and quantities of the latest situation, re-prices everything with a ticker at this date, and tells you which rows still need you"
+              ? "还没有可起步的快照：该账户的第一份快照需要手动建立。"
+              : "复制最新快照的持仓和数量，按此日期对所有带代码的持仓重新定价，并告诉你哪些行还需要处理"
           }
         >
-          {submitting ? "..." : "Start from the last one"}
+          {submitting ? "..." : "从上一份继续"}
         </button>
         {/* The destructive one, and it used to be the smallest thing here:
             lowercase text beside a solid button, reading as a link while being
@@ -785,11 +783,11 @@ They will be reported as unaccounted for, not removed in silence.
           disabled={submitting || !date || taken !== null}
           title={
             held.length === 0
-              ? "Declare from scratch what this account holds at this date."
-              : `An empty situation becomes this account's authority: the ${held.length} position${held.length === 1 ? "" : "s"} recorded here leave your net worth unless you re-enter them.`
+              ? "从零开始建立该账户在此日期的持仓记录。"
+              : `空白快照将成为该账户的权威记录：这里记录的 ${held.length} 个持仓若不重新录入，将从你的净资产中消失。`
           }
         >
-          {items.length === 0 ? "Declare the first situation" : "Start empty"}
+          {items.length === 0 ? "建立第一份快照" : "从空白开始"}
         </button>
       </form>
       {prefillNote && (
@@ -804,20 +802,20 @@ They will be reported as unaccounted for, not removed in silence.
           reader had to discover for themselves. */}
       {taken ? (
         <p className={noticeClass}>
-          {asSentence(formError ?? `${taken.date} already has a situation`)}{" "}
+          {asSentence(formError ?? `${taken.date} 已有快照`)}{" "}
           <button
             type="button"
             onClick={() => onSelect(taken)}
             className="font-medium underline underline-offset-2 hover:no-underline"
           >
-            Open it
+            打开它
           </button>
-          , or pick another date to record a new one.
+          ，或换一个日期记录新的快照。
         </p>
       ) : formError ? (
         <p className={noticeClass}>{formError}</p>
       ) : null}
-      <RowsOrEmpty loading={loading} error={error} empty={items.length === 0} emptyText="No situations yet.">
+      <RowsOrEmpty loading={loading} error={error} empty={items.length === 0} emptyText="还没有快照。">
         {items.map((s) => (
           <Row key={s.id} onClick={() => onSelect(s)} onDelete={() => remove(s)} title={s.date} note={s.note} value={money(s.base_currency).format(s.value_base)} />
         ))}
@@ -852,7 +850,7 @@ function SituationDetail({ snapshot }: { snapshot: Snapshot }) {
       setAnchors(a);
       setListing(l);
     } catch (err) {
-      setError(apiError(err, "Could not load holdings."));
+      setError(apiError(err, "无法加载持仓。"));
     } finally {
       setLoading(false);
     }
@@ -871,20 +869,19 @@ function SituationDetail({ snapshot }: { snapshot: Snapshot }) {
   const ageDays = daysAgo(snapshot.date);
   const isPast = ageDays > 0;
 
-  if (loading) return <p className="text-ink-soft">Loading…</p>;
+  if (loading) return <p className="text-ink-soft">加载中…</p>;
   if (error) return <p className="text-down">{error}</p>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-lg font-semibold text-ink">Situation: {snapshot.date}</h2>
+        <h2 className="text-lg font-semibold text-ink">快照：{snapshot.date}</h2>
         <span className="text-sm text-ink-soft">
-          Total <span className="font-semibold text-ink">{money(baseCurrency).format(total)}</span>
+          合计 <span className="font-semibold text-ink">{money(baseCurrency).format(total)}</span>
         </span>
       </div>
       <p className="text-sm text-ink-soft">
-        Cash is not entered here: it belongs in this account's Cash section, and a deposit entered in both
-        is counted twice.
+        现金不在这里录入：它属于该账户的「现金」一节，两边都录会重复计算。
       </p>
       {/* Editing today's photograph is ordinary bookkeeping — you are still
           filling it in. Editing an old one rewrites what that day SAID, which
@@ -893,10 +890,9 @@ function SituationDetail({ snapshot }: { snapshot: Snapshot }) {
       {isPast && (
         <p
           className="border-l-2 border-warn bg-warn-tint px-3 py-2 text-sm text-warn"
-          title="Editing an old situation rewrites what that day said, so the wealth chart will show today's figures as if they had been true back then, and P/L vs recorded collapses, because the photograph starts chasing the market."
+          title="编辑旧快照会改写当天的记录：财富图表会把今天的数字当成当年的数字，与记录值的盈亏也会失真，因为快照开始追着市场跑。"
         >
-          Situation of <b>{snapshot.date}</b>, {dayCount(ageDays)} ago: editing here rewrites
-          what that day said. For today, use “Start from the last one”.
+          <b>{snapshot.date}</b> 的快照，{dayCount(ageDays)}前：在此编辑会改写当天的记录。今天的请用「从上一份继续」。
         </p>
       )}
       {/* Every holding in exactly one bucket, or the buckets stop adding up to
@@ -1092,21 +1088,21 @@ function BucketSection({
       reset();
       await onChanged();
     } catch (err) {
-      setError(apiError(err, "Save failed."));
+      setError(apiError(err, "保存失败。"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function remove(h: Holding) {
-    if (!window.confirm(`Remove "${h.asset_name}"?`)) return;
+    if (!window.confirm(`移除「${h.asset_name}」？`)) return;
     setError(null);
     try {
       await deleteHolding(h.id);
       if (editId === h.id) reset();
       await onChanged();
     } catch (err) {
-      setError(apiError(err, "Delete failed."));
+      setError(apiError(err, "删除失败。"));
     }
   }
 
@@ -1129,9 +1125,9 @@ function BucketSection({
       const q = await getQuote(symbol.trim());
       if (closeTooFar(snapshotDate, q.as_of)) {
         setError(
-          `This situation is dated ${snapshotDate} but the price is from ${q.as_of}. ` +
-            "Dividing one by the other would invent a quantity you never held. " +
-            "Enter the units from your broker instead.",
+          `该快照的日期是 ${snapshotDate}，但价格来自 ${q.as_of}。` +
+            "两者相除会凭空算出你从未持有过的数量。" +
+            "请改为填写券商处的份额数。",
         );
         return;
       }
@@ -1143,11 +1139,11 @@ function BucketSection({
       const listed = q.currency;
       if (listed) setLearned((prev) => ({ ...prev, [q.symbol]: listed }));
       setPriceNote(
-        `${value} ÷ ${q.price} = ${units.toFixed(8)} units of ${q.name ?? q.symbol} ` +
-          `(close of ${q.as_of}). Derived, so check it against your broker.`,
+        `${value} ÷ ${q.price} = ${units.toFixed(8)} 份 ${q.name ?? q.symbol}` +
+          `（${q.as_of} 收盘价）。此为推算值，请与券商核对。`,
       );
     } catch (err) {
-      setError(apiError(err, "Could not price that ticker, so the units cannot be worked out."));
+      setError(apiError(err, "无法给该代码定价，因此算不出份额数。"));
     } finally {
       setFetchingPrice(false);
     }
@@ -1175,7 +1171,7 @@ function BucketSection({
       setPriceNote(
         `✓ ${q.name ?? q.symbol}${resolved ? ` → ${resolved}` : ""}: ${q.price} ${
           q.currency ?? ""
-        } (last close ${q.as_of})`,
+        }（${q.as_of} 收盘价）`,
       );
     } catch (err) {
       setPriceNote(null);
@@ -1185,8 +1181,8 @@ function BucketSection({
       const status = (err as { response?: { status?: number } })?.response?.status;
       setError(
         status === 503
-          ? "⚠ Could not reach the market, so your symbol may well be correct. Nothing answered, so this says nothing about it. Try again when you are online."
-          : "✗ No market match. A bare ticker won't work: add the exchange suffix (VWCE.MI for Borsa Italiana, .DE for Xetra, none for US) or paste the fund's ISIN.",
+          ? "⚠ 无法连接市场，你的代码很可能是对的。没有任何回应，这说明不了什么。联网后重试。"
+          : "✗ 市场上没有匹配。裸代码不行：请加交易所后缀（意大利证交所 VWCE.MI，Xetra 用 .DE，美国不加），或粘贴基金的 ISIN。",
       );
     } finally {
       setFetchingPrice(false);
@@ -1200,7 +1196,7 @@ function BucketSection({
       await refreshHoldingPrice(h.id);
       await onChanged();
     } catch (err) {
-      setError(apiError(err, `Price refresh failed for "${h.asset_name}". Check its symbol.`));
+      setError(apiError(err, `「${h.asset_name}」的价格刷新失败。请检查它的代码。`));
     } finally {
       setRefreshingId(null);
     }
@@ -1252,8 +1248,7 @@ function BucketSection({
               if (c.distribution_policy) setDistPolicy(c.distribution_policy);
               setPickNote(
                 [c.isin, policyWord(c.distribution_policy)].filter(Boolean).join(" · ") +
-                  " from the catalogue. The ticker is still yours to give: this fund" +
-                  " trades under a different symbol on each exchange.",
+                  " 来自产品目录。代码仍需你来填：同一只基金在各交易所的代码不同。",
               );
               return;
             }
@@ -1264,20 +1259,20 @@ function BucketSection({
             setSymbol(c.symbol);
             setPickNote(
               c.source === "owned"
-                ? `${c.symbol}: the symbol already on your position${
-                    c.institution ? ` at ${c.institution}` : ""
-                  }.`
-                : `${c.symbol} on ${c.exchange ?? "its exchange"}: checking what it prices…`,
+                ? `${c.symbol}：你持仓上已有的代码${
+                    c.institution ? `（在 ${c.institution}）` : ""
+                  }。`
+                : `${c.symbol}（${c.exchange ?? "其交易所"}）：正在查询它的报价…`,
             );
             void fetchPrice(true);
           }}
         />
         <input
           className={inputClass + " w-44"}
-          placeholder="Ticker or ISIN"
-          aria-label="Ticker or ISIN"
+          placeholder="代码或 ISIN"
+          aria-label="代码或 ISIN"
           aria-describedby={tickerCost ? tickerCostId : undefined}
-          title="Yahoo ticker WITH the exchange suffix (VWCE.MI = Borsa Italiana, SAP.DE = Xetra, no suffix = US, BTC-EUR = crypto). A bare ticker like 'VWCE' won't match. An ISIN (e.g. IE00BK5BQT80) works too. Prefer a EUR listing so prices need no FX conversion."
+          title="带交易所后缀的 Yahoo 代码（VWCE.MI = 意大利证交所，SAP.DE = Xetra，无后缀 = 美国，BTC-EUR = 加密货币）。像 VWCE 这样的裸代码匹配不到。ISIN（如 IE00BK5BQT80）也支持。优先选欧元上市的品种，价格无需换汇。"
           value={symbol}
           onChange={(e) => setSymbol(e.target.value)}
           onBlur={() => {
@@ -1287,10 +1282,10 @@ function BucketSection({
         {isinShown ? (
           <input
             className={inputClass + " w-40"}
-            placeholder="ISIN (optional)"
+            placeholder="ISIN（可选）"
             aria-label="ISIN"
             autoFocus={isinOpen}
-            title="The fund's ISIN. The ticker prices the position; the ISIN is what the look-through sources use to see inside it: the same fund has a different ticker on each exchange, so one field cannot do both."
+            title="基金的 ISIN。代码用来给持仓定价，穿透数据源则靠 ISIN 看清基金内部：同一只基金在各交易所代码不同，一个字段兼顾不了两者。"
             value={isin}
             onChange={(e) => setIsin(e.target.value)}
           />
@@ -1298,7 +1293,7 @@ function BucketSection({
           <button
             type="button"
             aria-expanded={false}
-            aria-label="Add the fund's ISIN"
+            aria-label="添加基金的 ISIN"
             onClick={() => setIsinOpen(true)}
             className="rounded-sm border border-rule px-2 py-2 text-xs text-ink-soft transition hover:border-olive hover:text-olive"
           >
@@ -1309,47 +1304,47 @@ function BucketSection({
           className={inputClass + " w-36"}
           type="number"
           step="0.01"
-          placeholder="cost (optional)"
-          aria-label="Cost"
-          title="What this position cost you in total, in its own currency. Leave it empty if you do not know: an empty cost reads as 'cost unknown', which is true, whereas a guess would let the P/L present a movement as a profit."
+          placeholder="成本（可选）"
+          aria-label="成本"
+          title="这个持仓总共花了多少，按它自己的货币计。不知道就留空：空成本表示「成本未知」，这是实话；而瞎猜会让盈亏把波动当成利润。"
           value={cost}
           onChange={(e) => setCost(e.target.value)}
         />
-        <select className={inputClass} aria-label="Dividend policy" value={distPolicy} onChange={(e) => setDistPolicy(e.target.value)} title="From its history: the app reads this holding's dividends on Yahoo once a day and credits each one to this institution's cash, which is how a share works. Distributing: the same, as you or the catalogue stated it. Accumulating: no dividend is recorded (a fund that reinvests them).">
-          <option value="">from its history</option>
-          <option value="acc">Accumulating</option>
-          <option value="dist">Distributing</option>
+        <select className={inputClass} aria-label="分红政策" value={distPolicy} onChange={(e) => setDistPolicy(e.target.value)} title="跟随历史：应用每天在 Yahoo 读取这个持仓的分红并计入该机构的现金，股票就是这么运作的。分红型：同上，按你或产品目录的声明。累积型：不记录分红（基金会把分红再投资）。">
+          <option value="">跟随历史</option>
+          <option value="acc">累积型</option>
+          <option value="dist">分红型</option>
         </select>
-        <select className={inputClass} aria-label="How this position is entered" value={mode} onChange={(e) => setMode(e.target.value as "total" | "qty")}>
-          <option value="total">Total</option>
-          <option value="qty">Qty × price</option>
+        <select className={inputClass} aria-label="持仓录入方式" value={mode} onChange={(e) => setMode(e.target.value as "total" | "qty")}>
+          <option value="total">总金额</option>
+          <option value="qty">数量 × 价格</option>
         </select>
         {mode === "total" ? (
           <>
-            <input className={inputClass + " w-32"} type="number" step="0.01" aria-label="Value" {...marks(needs, "value")} value={value} onChange={(e) => setValue(e.target.value)} />
+            <input className={inputClass + " w-32"} type="number" step="0.01" aria-label="金额" {...marks(needs, "value")} value={value} onChange={(e) => setValue(e.target.value)} />
             <button
               type="button"
               onClick={deriveQuantity}
               disabled={fetchingPrice || !symbol.trim() || !value}
-              title="Work out how many units that value is, at this instrument's price, so the position starts pricing itself instead of staying a number you have to maintain"
+              title="按这个金融产品的价格算出该金额对应多少份额，让持仓自己定价，而不是留一个要你维护的数字"
               className="rounded-sm border border-rule px-2 py-2 text-xs text-ink-soft transition hover:border-olive hover:text-olive disabled:opacity-50"
             >
-              {fetchingPrice ? "…" : "→ units"}
+              {fetchingPrice ? "…" : "→ 换算份额"}
             </button>
           </>
         ) : (
           <>
-            <input className={inputClass + " w-24"} type="number" step="any" aria-label="Quantity" {...marks(needs, "quantity")} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+            <input className={inputClass + " w-24"} type="number" step="any" aria-label="数量" {...marks(needs, "quantity")} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
             <span className="text-ink-faint">×</span>
-            <input className={inputClass + " w-28"} type="number" step="0.01" aria-label="Price" {...marks(needs, "unitPrice")} value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
+            <input className={inputClass + " w-28"} type="number" step="0.01" aria-label="价格" {...marks(needs, "unitPrice")} value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
             <button
               type="button"
               onClick={() => fetchPrice(true)}
               disabled={fetchingPrice || !symbol.trim()}
-              title="Fetch the latest market price for this ticker"
+              title="获取这个代码的最新市场价"
               className="rounded-sm border border-rule px-2 py-2 text-xs text-ink-soft transition hover:border-up hover:text-up disabled:opacity-50"
             >
-              {fetchingPrice ? "…" : "↻ live"}
+              {fetchingPrice ? "…" : "↻ 实时"}
             </button>
             {computed != null && (
               <span className="text-xs text-ink-soft">= {money(currency).format(computed)}</span>
@@ -1358,14 +1353,14 @@ function BucketSection({
         )}
         <input
           className={inputClass + " w-20"}
-          placeholder="currency"
-          aria-label="Currency"
+          placeholder="货币"
+          aria-label="货币"
           list={CURRENCY_LIST}
-          title="The currency the value, the price and the cost are in. Proposed from the listing when its currency is known, otherwise from the account's anchor on this situation's date; change it and it stays as you typed it."
+          title="金额、价格和成本所用的货币。已知上市货币时按上市货币建议，否则按该快照日期账户锚点的货币建议；你改过之后就按你填的来。"
           value={currency}
           onChange={(e) => setCurrencyChoice(e.target.value)}
         />
-        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "Save" : "Add"}</button>
+        <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "保存" : "添加"}</button>
         {editId != null && <CancelButton onClick={reset} />}
       </form>
 

@@ -22,12 +22,12 @@ import {
 import { goal, marks, refusal } from "./required";
 
 const GOAL_TYPES: { value: string; label: string }[] = [
-  { value: "protect_inflation", label: "Protect from inflation" },
-  { value: "stable_income", label: "Stable / passive income" },
-  { value: "long_term_growth", label: "Long-term growth" },
-  { value: "emergency_fund", label: "Emergency fund" },
-  { value: "target_amount", label: "Target amount by a date" },
-  { value: "other", label: "Something else (describe it)" },
+  { value: "protect_inflation", label: "抵御通胀" },
+  { value: "stable_income", label: "稳定 / 被动收入" },
+  { value: "long_term_growth", label: "长期增长" },
+  { value: "emergency_fund", label: "应急储备金" },
+  { value: "target_amount", label: "在某日期前攒到目标金额" },
+  { value: "other", label: "其他（请描述）" },
 ];
 
 function typeLabel(value: string | null): string | null {
@@ -68,7 +68,7 @@ export default function Goals() {
       setItems(goals);
       setBase(b.base_currency);
     } catch (err) {
-      setError(apiError(err, "Could not reach the backend. Is it running on :8000?"));
+      setError(apiError(err, "无法连接后端，后端是否在 :8000 上运行？"));
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ export default function Goals() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     // The dropdown carries the meaning; a free label like "get rich" adds
-    // nothing, so it is optional — except for "other", where it IS the goal.
+    // nothing, so it is optional  except for "other", where it IS the goal.
     const refused = refusal(goal(type), { type, name, currency });
     if (refused) {
       setError(refused);
@@ -143,49 +143,49 @@ export default function Goals() {
       reset();
       await load();
     } catch (err) {
-      setError(apiError(err, "Save failed."));
+      setError(apiError(err, "保存失败。"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function remove(g: Goal) {
-    if (!window.confirm(`Delete goal "${g.name}"?`)) return;
+    if (!window.confirm(`删除目标「${g.name}」？`)) return;
     setError(null);
     try {
       await deleteGoal(g.id);
       if (editId === g.id) reset();
       await load();
     } catch (err) {
-      setError(apiError(err, "Delete failed."));
+      setError(apiError(err, "删除失败。"));
     }
   }
 
   function goalSubtitle(g: Goal): string | undefined {
     if (g.type === "target_amount" && g.target_amount && g.target_date) {
-      return `target ${money(g.currency).format(g.target_amount)} by ${g.target_date}`;
+      return `目标 ${money(g.currency).format(g.target_amount)}，${g.target_date} 前达成`;
     }
     return undefined;
   }
 
-  if (loading) return <p className="text-ink-soft">Loading…</p>;
+  if (loading) return <p className="text-ink-soft">加载中…</p>;
 
   return (
     <Section
-      title="Goals"
-      hint="Pick a safe goal type, or set a concrete target (amount + date) to see the annual return it would require."
+      title="目标"
+      hint="挑一个稳妥的目标类型，或设定具体目标（金额 + 日期），看看它要求多高的年化收益。"
     >
       <form onSubmit={submit} className="space-y-3">
         <div className="flex flex-wrap gap-2">
           <select className={inputClass} {...marks(goal(type), "type")} value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="">what is this goal for?…</option>
+            <option value="">这个目标是为了什么？…</option>
             {GOAL_TYPES.map((t) => (
               <option key={t.value} value={t.value}>{t.label}</option>
             ))}
           </select>
           <input
             className={inputClass + " min-w-64 flex-1"}
-            placeholder="Detail (optional), e.g. flat in Milan"
+            placeholder="细节（可选），例如：米兰的公寓"
             {...marks(goal(type), "name")}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -194,16 +194,16 @@ export default function Goals() {
 
         {isTarget && (
           <div className="flex flex-wrap items-center gap-2">
-            <input className={inputClass + " w-36"} type="number" step="0.01" placeholder="Target" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} />
+            <input className={inputClass + " w-36"} type="number" step="0.01" placeholder="目标金额" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} />
             <input className={inputClass} type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
-            <input className={inputClass + " w-36"} type="number" step="0.01" placeholder="Current" value={currentAmount} onChange={(e) => setCurrentAmount(e.target.value)} />
-            <input className={inputClass + " w-40"} type="number" step="0.01" placeholder="Monthly contribution" value={monthly} onChange={(e) => setMonthly(e.target.value)} />
+            <input className={inputClass + " w-36"} type="number" step="0.01" placeholder="现有金额" value={currentAmount} onChange={(e) => setCurrentAmount(e.target.value)} />
+            <input className={inputClass + " w-40"} type="number" step="0.01" placeholder="每月投入" value={monthly} onChange={(e) => setMonthly(e.target.value)} />
             <input
               className={inputClass + " w-20"}
-              placeholder="currency"
+              placeholder="货币"
               {...marks(goal(type), "currency")}
               list={CURRENCY_LIST}
-              title="The currency the target, what you have and the contribution are in. Proposed from your base currency; change it and it stays as you typed it."
+              title="目标金额、现有金额和每月投入所用的货币。默认按你的本位币给出；改成别的就按你输入的保留。"
               value={currency}
               onChange={(e) => setCurrencyChoice(e.target.value)}
             />
@@ -213,10 +213,10 @@ export default function Goals() {
         {rr && <RequiredReturnNote rr={rr} />}
 
         <div className="flex items-center gap-2">
-          <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "Save goal" : "Add goal"}</button>
+          <button className={btnClass} disabled={submitting}>{submitting ? "..." : editId != null ? "保存目标" : "添加目标"}</button>
           {editId != null && (
             <button type="button" onClick={reset} className="rounded-sm px-3 py-2 text-sm text-ink-soft hover:text-ink">
-              Cancel
+              取消
             </button>
           )}
         </div>
@@ -224,7 +224,7 @@ export default function Goals() {
 
       {error && <p className="text-down">{error}</p>}
 
-      <RowsOrEmpty loading={false} error={null} empty={items.length === 0} emptyText="No goals yet.">
+      <RowsOrEmpty loading={false} error={null} empty={items.length === 0} emptyText="还没有目标。">
         {items.map((g) => (
           <Row
             key={g.id}
@@ -251,10 +251,10 @@ function RequiredReturnNote({ rr }: { rr: RequiredReturnResult }) {
       : r > 0.08
         ? "bg-warn-tint text-warn"
         : "bg-up-tint text-up";
-  const rate = r === null ? "unreachable" : `${(r * 100).toFixed(1)}%/yr`;
+  const rate = r === null ? "无法达成" : `${(r * 100).toFixed(1)}%/年`;
   return (
     <p className={"rounded-sm p-3 text-sm " + tone}>
-      Over ~{rr.years} years this requires a return of <strong>{rate}</strong>. {rr.assessment}
+      约 {rr.years} 年做到，需要年化收益 <strong>{rate}</strong>。{rr.assessment}
     </p>
   );
 }

@@ -37,7 +37,7 @@ export function daysAgo(date: string, now: Date = new Date()): number {
 
 /** "1 day", "18 days". */
 export function dayCount(n: number): string {
-  return `${n} ${n === 1 ? "day" : "days"}`;
+  return `${n} 天`;
 }
 
 /** How old a date is, in words: "today", "1 day ago", "6 days ago". What the
@@ -45,5 +45,5 @@ export function dayCount(n: number): string {
     days old read like today's. */
 export function ageWords(date: string, now: Date = new Date()): string {
   const n = daysAgo(date, now);
-  return n <= 0 ? "today" : `${dayCount(n)} ago`;
+  return n <= 0 ? "今天" : `${dayCount(n)}前`;
 }

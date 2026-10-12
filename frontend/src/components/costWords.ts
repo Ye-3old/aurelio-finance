@@ -15,21 +15,21 @@ type CostRow = { cost_known: boolean; cost_estimated: boolean };
 /** The title over a row's average price. */
 export function avgCostTitle(r: CostRow): string {
   if (!r.cost_known) {
-    return "No purchase price on record: this is the price the situation was recorded at, not what you paid";
+    return "没有买入价记录：这是快照记账时的价格，不是你的买入成本";
   }
   if (r.cost_estimated) {
-    return "Average price paid, ESTIMATED in part: some or all of it is a plan's buy priced at a market close, or a cost derived from a reported return, not a contract note";
+    return "平均买入价，部分为预估：其中部分或全部来自定投按收盘价计的买入，或由申报收益率倒推的成本，并非交割单";
   }
-  return "Average price actually paid, from recorded purchases";
+  return "实际平均买入价，来自已记录的买入";
 }
 
 /** The title over a row's profit or loss. */
 export function plTitle(r: CostRow): string {
   if (!r.cost_known) {
-    return "Movement since the situation was recorded, NOT profit: no purchase price is on record";
+    return "快照记账以来的波动，并非盈亏：没有买入价记录";
   }
   if (r.cost_estimated) {
-    return "Profit or loss against a purchase price ESTIMATED in part (a plan's buy at a market close, or a cost derived from a reported return): real, but not verified against a contract note";
+    return "相对部分预估的买入价的盈亏（定投按收盘价计的买入，或由申报收益率倒推的成本）：真实但未经交割单核对";
   }
-  return "Profit or loss against the average price you paid";
+  return "相对平均买入价的盈亏";
 }

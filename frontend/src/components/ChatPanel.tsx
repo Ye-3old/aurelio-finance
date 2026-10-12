@@ -156,7 +156,7 @@ function Thought({ text, thinking, answered }: { text: string; thinking: boolean
         className="inline-flex cursor-pointer items-center gap-1.5 text-[0.7rem] uppercase tracking-[0.14em] text-ink-faint hover:text-ink-soft"
       >
         {thinking && !answered ? <Spinner className="h-3 w-3" /> : null}
-        {thinking && !answered ? "Thinking" : "Thoughts"}
+        {thinking && !answered ? "思考中" : "思考"}
         <span aria-hidden="true">{open ? "−" : "+"}</span>
       </button>
       {open && (
@@ -185,11 +185,11 @@ function ToolNote({ block, running }: { block: ChatToolBlock; running: boolean }
     <div className="my-2 border-l border-hair pl-3">
       <p className="flex items-baseline gap-2 text-[0.7rem] uppercase tracking-[0.14em] text-ink-faint">
         {running ? <Spinner className="h-3 w-3" /> : null}
-        <span>{running ? "Consulting" : "Consulted"}</span>
+        <span>{running ? "调用中" : "已调用"}</span>
         <span className="normal-case tracking-normal text-ink-soft">{block.name}</span>
       </p>
       {block.ok === false && (
-        <p className="mt-0.5 text-xs text-down">{block.detail ?? "It did not answer."}</p>
+        <p className="mt-0.5 text-xs text-down">{block.detail ?? "它没有回应。"}</p>
       )}
     </div>
   );
@@ -205,7 +205,7 @@ function Sources({ block }: { block: ChatSourcesBlock }) {
   if (links.length === 0) return null;
   return (
     <div className="my-2 border-l border-hair pl-3">
-      <p className="text-[0.7rem] uppercase tracking-[0.14em] text-ink-faint">Found on the web</p>
+      <p className="text-[0.7rem] uppercase tracking-[0.14em] text-ink-faint">网络上找到</p>
       <ul className="mt-1 space-y-0.5">
         {links.map((l) => (
           <li key={l.href} className="break-words text-xs leading-relaxed">
@@ -243,7 +243,7 @@ function Steps({ steps, running }: { steps: ChatStepEvent[]; running: boolean })
     <div className="my-2 border-l border-hair pl-3">
       <p className="flex items-baseline gap-2 text-[0.7rem] uppercase tracking-[0.14em] text-ink-faint">
         {running ? <Spinner className="h-3 w-3" /> : null}
-        <span>{running ? "Analyzing" : "Analyzed"}</span>
+        <span>{running ? "分析中" : "已分析"}</span>
       </p>
       <ol className="mt-1 space-y-0.5">
         {steps.map((s) => (
@@ -251,7 +251,7 @@ function Steps({ steps, running }: { steps: ChatStepEvent[]; running: boolean })
             <span className="text-ink-faint">{s.step_no}.</span>
             <span className="min-w-0 flex-1">{s.label}</span>
             <span className="tnum shrink-0 text-ink-faint">
-              {(s.duration_ms / 1000).toFixed(1)}s
+              {(s.duration_ms / 1000).toFixed(1)} 秒
             </span>
           </li>
         ))}
@@ -319,7 +319,7 @@ function Card({
   return (
     <div className="my-3 rounded-sm border border-rule bg-surface p-3">
       <p className={"text-[0.65rem] font-medium uppercase tracking-[0.14em] " + tone}>
-        {pending ? "Proposed" : block.outcome === "confirmed" ? block.done || "Recorded" : "Rejected"}
+        {pending ? "待确认" : block.outcome === "confirmed" ? block.done || "已记录" : "已拒绝"}
       </p>
       <p className="mt-1 text-sm text-ink">{block.title}</p>
       {/* What confirming COSTS that the fields do not show, in the proposing
@@ -340,13 +340,13 @@ function Card({
               say the first of those over both, which was right for the card it
               was written for and wrong for the next one. The fallback is the
               one thing true of every diff card there can be. */}
-          <p>{block.consequence || "This replaces what is on record, and the old value does not come back."}</p>
+          <p>{block.consequence || "这会替换已有记录，旧值不会恢复。"}</p>
           <table className="mt-2 w-full text-left">
             <thead>
               <tr className="text-[0.65rem] uppercase tracking-[0.14em]">
-                <th className="font-medium">Field</th>
-                <th className="font-medium">Now</th>
-                <th className="font-medium">Would say</th>
+                <th className="font-medium">字段</th>
+                <th className="font-medium">当前</th>
+                <th className="font-medium">改为</th>
               </tr>
             </thead>
             <tbody className="tnum">
@@ -355,8 +355,8 @@ function Card({
                   <td className="pr-2 text-ink-soft">{d.field}</td>
                   {/* null is not zero: that day says nothing about this yet,
                       and the two must not look alike. */}
-                  <td className="pr-2">{d.now ?? "not set"}</td>
-                  <td>{d.proposed ?? "not set"}</td>
+                  <td className="pr-2">{d.now ?? "未设置"}</td>
+                  <td>{d.proposed ?? "未设置"}</td>
                 </tr>
               ))}
             </tbody>
@@ -372,7 +372,7 @@ function Card({
         // meaning different things — an argument called `value` above a
         // returned one is not a repeated row.
         <div className="mt-3 border-t border-hair pt-2">
-          <p className="text-[0.65rem] uppercase tracking-[0.14em] text-ink-faint">Written</p>
+          <p className="text-[0.65rem] uppercase tracking-[0.14em] text-ink-faint">已写入</p>
           {block.tool === ANALYZER && typeof block.result.run_id === "number" && (
             // The one result that is an address rather than a row. The verdict
             // is a document and this column is 32% wide, which was the argument
@@ -383,7 +383,7 @@ function Card({
               onClick={() => onOpenRun(block.result?.run_id as number)}
               className="mt-1 cursor-pointer text-sm text-olive underline-offset-2 hover:underline"
             >
-              Read it in full ›
+              阅读全文 ›
             </button>
           )}
           {/* The receipt the tool words: what was written that the card's own
@@ -411,7 +411,7 @@ function Card({
                 reader's records and wrong for the one that does not — over a
                 card naming a security it reads as approval of a purchase
                 nobody proposed. */}
-            {block.verb || "Confirm"}
+            {block.verb || "确认"}
           </button>
           <button
             type="button"
@@ -419,7 +419,7 @@ function Card({
             onClick={() => onDecide("reject")}
             className="rounded-sm px-3 py-2 text-sm text-ink-soft transition hover:text-ink disabled:opacity-50"
           >
-            Reject
+            拒绝
           </button>
         </div>
       )}
@@ -430,9 +430,9 @@ function Card({
 // Three questions the chat can answer from the records alone, so the empty
 // panel teaches what it is for instead of waiting to be guessed at.
 const OPENERS = [
-  "How am I doing against my goals?",
-  "Which positions have a cost I never recorded?",
-  "Run the analyzer and tell me what it says.",
+  "我的目标完成得怎么样？",
+  "哪些持仓有我从未记过的成本？",
+  "运行分析，把结果告诉我。",
 ];
 
 function EndNote({ m }: { m: Message }) {
@@ -440,11 +440,11 @@ function EndNote({ m }: { m: Message }) {
     case "done":
       return m.model ? <p className="mt-2 text-[0.7rem] text-ink-faint">{m.model}</p> : null;
     case "error":
-      return <p className="mt-2 text-xs text-down">{m.detail ?? "The answer could not continue."}</p>;
+      return <p className="mt-2 text-xs text-down">{m.detail ?? "回答没能继续。"}</p>;
     case "cut":
-      return <p className="mt-2 text-xs text-down">Stopped before it was finished.</p>;
+      return <p className="mt-2 text-xs text-down">回答未完成就被中断。</p>;
     case "aborted":
-      return <p className="mt-2 text-xs text-ink-faint">Stopped.</p>;
+      return <p className="mt-2 text-xs text-ink-faint">已停止。</p>;
     default:
       return null;
   }
@@ -482,9 +482,9 @@ function Bubble({
         {where && (
           <p
             className="mt-1 text-right text-xs text-ink-faint"
-            title="The page you were on when you asked: what the chat was told 'this' and 'here' point at"
+            title="提问时你所在的页面：即对话中「这个」「这里」所指的页面"
           >
-            asked on {where.label}
+            提问于 {where.label}
           </p>
         )}
       </div>
@@ -890,7 +890,7 @@ export default function ChatPanel({
     setHistoryError(null);
     listConversations()
       .then(setHistory)
-      .catch((e) => setHistoryError(apiError(e, "The history could not be loaded.")));
+      .catch((e) => setHistoryError(apiError(e, "历史记录加载失败。")));
   }
 
   async function resume(c: ChatConversation) {
@@ -901,7 +901,7 @@ export default function ChatPanel({
       setMessages(full.messages.map(fromStored));
       setView("chat");
     } catch (e) {
-      setHistoryError(apiError(e, "That conversation could not be loaded."));
+      setHistoryError(apiError(e, "该对话加载失败。"));
     }
   }
 
@@ -914,7 +914,7 @@ export default function ChatPanel({
         setMessages([]);
       }
     } catch (e) {
-      setHistoryError(apiError(e, "That conversation could not be deleted."));
+      setHistoryError(apiError(e, "该对话删除失败。"));
     }
   }
 
@@ -935,7 +935,7 @@ export default function ChatPanel({
     // width animation, and an overflow ancestor is what a sticky child sticks
     // to — it would ride away with the page, which is what happened.
     <aside
-      aria-label="Chat with Aurelio"
+      aria-label="与 Aurelio 对话"
       aria-hidden={!open}
       className={
         "sticky top-0 h-screen shrink-0 self-start overflow-hidden border-r border-rule bg-surface transition-[width] duration-300 ease-in-out motion-reduce:transition-none " +
@@ -946,13 +946,13 @@ export default function ChatPanel({
         {/* No mark here: the one in the header is enough, and the rail's
             button is the panel's only open/close control. */}
         <div className="flex items-center gap-2 border-b border-rule px-4 py-3">
-          <span className="font-display text-lg leading-none text-ink">Ask Aurelio</span>
+          <span className="font-display text-lg leading-none text-ink">问 Aurelio</span>
           <button
             type="button"
             onClick={view === "history" ? () => setView("chat") : openHistory}
-            aria-label={view === "history" ? "Back to the conversation" : "Past conversations"}
+            aria-label={view === "history" ? "回到对话" : "历史对话"}
             aria-pressed={view === "history"}
-            title={view === "history" ? "Back to the conversation" : "Past conversations"}
+            title={view === "history" ? "回到对话" : "历史对话"}
             className={
               "ml-auto rounded-sm p-1.5 transition " +
               (view === "history"
@@ -979,18 +979,18 @@ export default function ChatPanel({
               onClick={onOpenAnalyses}
               className="-mx-2 mb-4 flex w-[calc(100%+1rem)] cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-left text-sm text-olive transition hover:bg-tint"
             >
-              Past analyses
+              历史分析
               <span aria-hidden="true" className="ml-auto text-ink-faint">
                 ›
               </span>
             </button>
             <p className="mb-3 text-[0.65rem] font-medium uppercase tracking-[0.14em] text-ink-soft">
-              Past conversations
+              历史对话
             </p>
             {historyError && <p className="text-sm text-down">{historyError}</p>}
-            {history === null && !historyError && <p className="text-sm text-ink-soft">Loading…</p>}
+            {history === null && !historyError && <p className="text-sm text-ink-soft">加载中…</p>}
             {history !== null && history.length === 0 && (
-              <p className="text-sm text-ink-soft">Nothing yet. Ask something and it will be kept here.</p>
+              <p className="text-sm text-ink-soft">还没有内容。提个问题，这里会替你保留。</p>
             )}
             {/* Each row is a button and has to look like one: a pointer, a
                 hover ground, a chevron — the same grammar as the list rows in
@@ -1018,7 +1018,7 @@ export default function ChatPanel({
                             (c.id === conversationId ? "font-medium text-ink" : "text-ink")
                           }
                         >
-                          {c.title ?? "Untitled"}
+                          {c.title ?? "未命名"}
                         </span>
                         <span className="block text-[0.7rem] text-ink-faint">
                           {new Date(c.updated_at).toLocaleString(locale)}
@@ -1031,8 +1031,8 @@ export default function ChatPanel({
                     <button
                       type="button"
                       onClick={() => void forget(c)}
-                      aria-label="Delete this conversation"
-                      title="Delete this conversation"
+                      aria-label="删除此对话"
+                      title="删除此对话"
                       className="shrink-0 cursor-pointer px-2 py-2 text-ink-faint transition hover:text-down"
                     >
                       ✕
@@ -1098,8 +1098,8 @@ export default function ChatPanel({
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={onKey}
               rows={2}
-              placeholder="Ask about your finances…"
-              aria-label="Your question"
+              placeholder="问问你的财务状况…"
+              aria-label="你的问题"
               className="block w-full resize-none bg-transparent px-3 pt-3 pb-1 text-sm outline-none placeholder:text-ink-faint"
             />
             <div className="flex items-center gap-2 px-2 pb-2">
@@ -1107,8 +1107,8 @@ export default function ChatPanel({
                 type="button"
                 onClick={startNew}
                 disabled={messages.length === 0}
-                aria-label="New conversation"
-                title="New conversation"
+                aria-label="新对话"
+                title="新对话"
                 className="rounded-sm p-1.5 text-ink-soft transition hover:bg-tint hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent"
               >
                 <PlusIcon />
@@ -1119,7 +1119,7 @@ export default function ChatPanel({
                 value={currentModel}
                 onChange={(e) => setModel(e.target.value || null)}
                 disabled={!models}
-                aria-label="Model"
+                aria-label="模型"
                 title={currentNote}
                 className="min-w-0 max-w-[60%] truncate rounded-full border border-hair bg-transparent px-2.5 py-1 text-xs text-ink-soft outline-none transition hover:border-rule hover:text-ink focus:border-olive"
               >
@@ -1127,19 +1127,19 @@ export default function ChatPanel({
                   models.models.map((m) => (
                     <option key={m.slug} value={m.slug}>
                       {m.slug.includes("/") ? m.slug.slice(m.slug.indexOf("/") + 1) : m.slug}
-                      {m.slug === models.default ? " · default" : ""}
+                      {m.slug === models.default ? " · 默认" : ""}
                     </option>
                   ))
                 ) : (
-                  <option value="">model…</option>
+                  <option value="">模型…</option>
                 )}
               </select>
               {streaming ? (
                 <button
                   type="button"
                   onClick={() => abortRef.current?.abort()}
-                  aria-label="Stop the answer"
-                  title="Stop the answer"
+                  aria-label="停止回答"
+                  title="停止回答"
                   className="ml-auto flex h-8 w-8 items-center justify-center rounded-full bg-ink text-ground transition hover:bg-ink-soft"
                 >
                   <StopIcon />
@@ -1148,8 +1148,8 @@ export default function ChatPanel({
                 <button
                   type="submit"
                   disabled={!draft.trim()}
-                  aria-label="Send"
-                  title="Send (Enter)"
+                  aria-label="发送"
+                  title="发送（Enter）"
                   className="ml-auto flex h-8 w-8 items-center justify-center rounded-full bg-olive text-white transition hover:bg-olive-deep disabled:opacity-40 disabled:hover:bg-olive"
                 >
                   <ArrowUpIcon />
@@ -1158,7 +1158,7 @@ export default function ChatPanel({
             </div>
           </div>
           <p className="mt-2 text-center text-[0.65rem] leading-snug text-ink-faint">
-            Educational information, not regulated financial advice.
+            教育性信息，不构成受监管的投资建议。
           </p>
         </form>
       </div>
