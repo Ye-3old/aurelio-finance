@@ -1,13 +1,16 @@
 """AI advisor: assemble the user's financial context and ask an LLM for an
 educational analysis.
 
-Provider: OpenRouter (https://openrouter.ai), an OpenAI-compatible gateway, so
-we use the `openai` SDK pointed at OpenRouter's base URL.
+Provider: an OpenAI-compatible gateway. By default OpenRouter
+(https://openrouter.ai); the base URL is configurable, so any compatible
+endpoint works (MiMo, DeepSeek, Kimi, a local server).
 
 Configuration (from environment / backend/.env):
 - OPENROUTER_API_KEY : required to call the model.
-- OPENROUTER_MODEL   : model slug from https://openrouter.ai/models
-                       (default: a Claude Sonnet).
+- OPENROUTER_BASE_URL : the gateway's OpenAI-compatible base URL
+                       (default: https://openrouter.ai/api/v1).
+- OPENROUTER_MODEL   : the model's id on that gateway
+                       (default: anthropic/claude-opus-5.5 on OpenRouter).
 
 PRIVACY NOTE: this sends the user's financial data to a third-party cloud LLM.
 
@@ -32,8 +35,28 @@ from sqlalchemy.orm import Session
 
 from app import analytics, catalogue, crud, dated, fx, planning, schemas
 
-OPENROUTER_BASE_URL = "https://api.xiaomimimo.com/v1"
-DEFAULT_MODEL = "mimo-v2.6-pro"
+# The gateway's OpenAI-compatible base URL, configurable so the app can talk
+# to any compatible endpoint (MiMo, DeepSeek, Kimi, a local server). The
+# default is OpenRouter; a private gateway replaces it in backend/.env.
+OPENROUTER_BASE_URL = (
+    os.getenv("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1"
+)
+DEFAULT_MODEL = "anthropic/claude-opus-5.5"
+
+
+def _on_openrouter() -> bool:
+    """Whether the configured gateway IS OpenRouter. Only OpenRouter has the
+    public model list the "model is gone" check reads, and only its refusals
+    are documented in the words the remedy below quotes."""
+    return "openrouter.ai" in OPENROUTER_BASE_URL
+
+
+def _gateway() -> str:
+    """How a sentence names the configured gateway: "OpenRouter" when it is
+    that, otherwise the host itself ("api.xiaomimimo.com")."""
+    if _on_openrouter():
+        return "OpenRouter"
+    return urllib.parse.urlparse(OPENROUTER_BASE_URL).hostname or "the gateway"
 
 # One sentence of punctuation, for every prompt whose words reach a page: the
 # chat's answer, and each step the Analysis page shows. The reader asked for no
@@ -1495,7 +1518,7 @@ def _refused(error: Exception, model: str, chat: bool = False) -> AdvisorError:
         )
     if not isinstance(error, openai.APIStatusError):
         return AdvisorError(
-            f"The call to OpenRouter failed before it was answered ({error}). Ask "
+            f"The call to {_gateway()} failed before it was answered ({error}). Ask "
             "again in a moment."
         )
     body = error.body if isinstance(error.body, dict) else {}
@@ -1503,11 +1526,11 @@ def _refused(error: Exception, model: str, chat: bool = False) -> AdvisorError:
     status = error.status_code
     means = _REFUSAL_MEANS.get(status)
     refused = (
-        f"OpenRouter refused the call to {model} with {status}"
+        f"{_gateway()} refused the call to {model} with {status}"
         + (f": {means}. " if means else ". ")
-        + f"{_remedy(status, chat)} OpenRouter said: {said}."
+        + f"{_remedy(status, chat)} {_gateway()} said: {said}."
     )
-    if status not in (400, 404):
+    if status not in (400, 404) or not _on_openrouter():
         return AdvisorError(refused)
     try:
         listed = _fetch_model_list()
@@ -1519,13 +1542,13 @@ def _refused(error: Exception, model: str, chat: bool = False) -> AdvisorError:
     if model in listed:
         return AdvisorError(refused)
     gone = (
-        f"The model {model} is no longer served by OpenRouter: it refused the call "
+        f"The model {model} is no longer served by {_gateway()}: it refused the call "
         f"({said}), and its public list of models no longer has it. {_where_set(model)}"
     )
     dated = _dated(model, listed)
     if dated:
         versions = "a dated version" if len(dated) == 1 else "dated versions"
-        gone += f" OpenRouter still lists {_and(dated)}, {versions} of it."
+        gone += f" {_gateway()} still lists {_and(dated)}, {versions} of it."
     return ModelGone(gone)
 
 

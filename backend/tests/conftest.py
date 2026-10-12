@@ -29,6 +29,11 @@ _TMP_DB = pathlib.Path(tempfile.gettempdir()) / f"aurelio_pytest_{os.getpid()}.d
 os.environ["DATABASE_URL"] = f"sqlite:///{_TMP_DB}"
 # Tests build the schema straight from the models, skipping Alembic.
 os.environ["AURELIO_SKIP_MIGRATIONS"] = "1"
+# The suite speaks of OpenRouter whatever the developer's backend/.env points
+# at: the refusal wording and the model-gone check are OpenRouter's, and a
+# local gateway in .env must not rewrite what the tests assert. load_dotenv
+# does not override an existing variable, so pinning it here wins.
+os.environ["OPENROUTER_BASE_URL"] = "https://openrouter.ai/api/v1"
 
 import pytest  # noqa: E402
 from alembic import command  # noqa: E402
